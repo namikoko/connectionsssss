@@ -5,3 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Connectionsssssss</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    width:100%; height:100%;
+    background:#0e0e0e;
+    display:flex; flex-direction:column; align-items:center;
+    font-family:'DM Mono', monospace;
+    overflow-x:hidden;
+    }
+      
+  #top-bar {
+    width:100%; max-width:520px;
+    padding:22px 20px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  #top-bar h1 {
+    font-family:'Playfair Display', serif;
+    font-size:28px; font-weight:700;
+    color:#f0ede6;
+    letter-spacing:4px;
+    text-transform:uppercase;
+  }
+  #top-bar p {
+    font-size:10px; color:#555;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+  #divider {
+    width:100%; max-width:520px;
+    height:1px; background:linear-gradient(to right, transparent, #333, transparent);
+    margin-bottom:10px;
+  }
+  #game-wrapper {
+    width:100%; max-width:520px;
+    display:flex; justify-content:center;
+  }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+  <h1>Cluster</h1>
+  <p>Group four words that belong together</p>
+</div>
+<div id="divider"></div>
+<div id="game-wrapper"></div>
+
+<script>
+const config = {
+  type: Phaser.AUTO,
+  width: 480,
+  height: 480,
+  backgroundColor: '#0e0e0e',
+  parent: 'game-wrapper',
+  scene: {
+    preload: preload,
+    create: create
+  }
+}; const PUZZLES = [
+  {
+    categories: [
+      { label:"IN A PENCIL CASE",  accent:0xe8c547, hex:"#e8c547", words:["ERASER","RULER","SHARPENER","HIGHLIGHTER"] },
+      { label:"TYPES OF PASTA",    accent:0x6dbf8a, hex:"#6dbf8a", words:["PENNE","FUSILLI","RIGATONI","FARFALLE"] },
+      { label:"___ BALL",          accent:0x6aaed6, hex:"#6aaed6", words:["BASKET","FOOT","VOLLEY","SOFT"] },
+      { label:"SHADES OF BLUE",    accent:0xb07fd4, hex:"#b07fd4", words:["COBALT","TEAL","NAVY","CERULEAN"] }
+    ]
+  },
+    {
+        categories: [
+        { label:"IN A PENCIL CASE",  accent:0xe8c547, hex:"#e8c547", words:["ERASER","RULER","SHARPENER","HIGHLIGHTER"] },
+        { label:"TYPES OF PASTA",    accent:0x6dbf8a, hex:"#6dbf8a", words:["PENNE","FUSILLI","RIGATONI","FARFALLE"] },
+        { label:"___ BALL",          accent:0x6aaed6, hex:"#6aaed6", words:["BASKET","FOOT","VOLLEY","SOFT"] },
+        { label:"SHADES OF BLUE",    accent:0xb07fd4, hex:"#b07fd4", words:["COBALT","TEAL","NAVY","CERULEAN"] }
+        ]
+    }          ]  

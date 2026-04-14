@@ -14,11 +14,6 @@
   #top-bar p{font-family:'DM Mono',monospace;font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;}
   #puzzle-meta{font-family:'DM Mono',monospace;font-size:9px;color:#2e2e2e;letter-spacing:2px;margin-top:2px;}
   #divider{width:100%;max-width:540px;height:1px;background:linear-gradient(to right,transparent,#2a2a2a,transparent);margin-bottom:12px;}
-  #loading{display:none;font-family:'DM Mono',monospace;font-size:11px;color:#333;letter-spacing:3px;text-transform:uppercase;margin-top:60px;text-align:center;line-height:2.4;}
-  .dot{display:inline-block;animation:blink 1.2s infinite;}
-  .dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
-  #err{display:none;font-family:'DM Mono',monospace;font-size:10px;color:#8b3a3a;letter-spacing:1px;margin-top:40px;text-align:center;line-height:2;}
   #game-wrapper{width:100%;max-width:540px;display:flex;justify-content:center;}
   #game-wrapper canvas{width:100%!important;height:auto!important;}
 </style>
@@ -30,22 +25,200 @@
   <div id="puzzle-meta"></div>
 </div>
 <div id="divider"></div>
-<div id="loading">Fetching puzzle<br><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
-<div id="err"></div>
 <div id="game-wrapper"></div>
 
 <script>
-// ── Colour map: category string → accent ─────────────────────────────────────
-const LEVEL_MAP = {
-  yellow: { level:0, accent:0xe8c547, hex:'#e8c547' },
-  green:  { level:1, accent:0x6dbf8a, hex:'#6dbf8a' },
-  blue:   { level:2, accent:0x6aaed6, hex:'#6aaed6' },
-  purple: { level:3, accent:0xb07fd4, hex:'#b07fd4' }
-};
+// ── Embedded puzzles — no API needed ──────────────────────────────────────────
+const PUZZLES = [
+  {id:1,date:"2023-06-12",categories:[
+    {level:0,label:"FISH",words:["BASS","FLOUNDER","PIKE","TROUT"]},
+    {level:1,label:"FIRE ___",words:["ANT","DRILL","ISLAND","WORK"]},
+    {level:2,label:"STARTING WITH BODY PARTS",words:["ARMADILLO","ELBOW ROOM","KNEECAP","SHINDIG"]},
+    {level:3,label:"___ GAME",words:["BALL","BOARD","MIND","VIDEO"]}
+  ]},
+  {id:2,date:"2023-06-13",categories:[
+    {level:0,label:"SLENDER",words:["LEAN","SLIM","SLIGHT","THIN"]},
+    {level:1,label:"MICHAEL ___",words:["B. JORDAN","CERA","JACKSON","SCOTT"]},
+    {level:2,label:"BEGINS WITH A FRUIT",words:["APPLESAUCE","GRAPEVINE","LIMELIGHT","PEACHFUZZ"]},
+    {level:3,label:"PALINDROMES",words:["CIVIC","KAYAK","LEVEL","RACECAR"]}
+  ]},
+  {id:3,date:"2023-06-20",categories:[
+    {level:0,label:"THINGS THAT ARE ROUND",words:["BALL","GLOBE","HOOP","RING"]},
+    {level:1,label:"SYNONYMS FOR STEAL",words:["LIFT","NAB","PINCH","SWIPE"]},
+    {level:2,label:"___ BOARD",words:["CARD","CHALK","DART","SKATE"]},
+    {level:3,label:"TYPES OF HUMOR",words:["DRY","DARK","SLAPSTICK","WIT"]}
+  ]},
+  {id:4,date:"2023-07-05",categories:[
+    {level:0,label:"PLACES TO SIT",words:["BENCH","CHAIR","COUCH","STOOL"]},
+    {level:1,label:"WORDS AFTER BREAK",words:["AWAY","DOWN","OUT","THROUGH"]},
+    {level:2,label:"GREEK LETTERS",words:["ALPHA","BETA","DELTA","OMEGA"]},
+    {level:3,label:"___ LINE",words:["BOTTOM","FINISH","PUNCH","SIDE"]}
+  ]},
+  {id:5,date:"2023-07-12",categories:[
+    {level:0,label:"COFFEE DRINKS",words:["AMERICANO","CAPPUCCINO","ESPRESSO","LATTE"]},
+    {level:1,label:"WAYS TO COOK EGGS",words:["BOILED","FRIED","POACHED","SCRAMBLED"]},
+    {level:2,label:"___ STONE",words:["CORNER","KEY","LIME","MILE"]},
+    {level:3,label:"TV SHOW GENRES",words:["DRAMA","MYSTERY","REALITY","SITCOM"]}
+  ]},
+  {id:6,date:"2023-07-20",categories:[
+    {level:0,label:"PASTA SHAPES",words:["BOW TIE","PENNE","RIGATONI","SPAGHETTI"]},
+    {level:1,label:"WORDS BEFORE HOUSE",words:["BIRD","DOG","FIRE","GREEN"]},
+    {level:2,label:"FAMOUS JACKS",words:["BLACK","CRACKER","HAMMER","KNIFE"]},
+    {level:3,label:"DOUBLE LETTERS",words:["BALLOON","BROCCOLI","COFFEE","TOFFEE"]}
+  ]},
+  {id:7,date:"2023-08-01",categories:[
+    {level:0,label:"THINGS IN A WALLET",words:["CASH","CARD","ID","RECEIPT"]},
+    {level:1,label:"SHADES OF BLUE",words:["COBALT","NAVY","SKY","TEAL"]},
+    {level:2,label:"ROCK BANDS",words:["CREAM","KISS","QUEEN","RUSH"]},
+    {level:3,label:"___ POOL",words:["CAR","DEAD","GENE","WHIRL"]}
+  ]},
+  {id:8,date:"2023-08-10",categories:[
+    {level:0,label:"FOOTWEAR",words:["BOOT","LOAFER","SANDAL","SNEAKER"]},
+    {level:1,label:"WORDS AFTER SPEED",words:["BOAT","BUMP","DIAL","WAY"]},
+    {level:2,label:"TYPES OF DANCE",words:["SALSA","SWING","TANGO","WALTZ"]},
+    {level:3,label:"THINGS THAT SNAP",words:["FINGERS","JUDGEMENT","PEAS","TURTLE"]}
+  ]},
+  {id:9,date:"2023-08-22",categories:[
+    {level:0,label:"BABY ANIMALS",words:["CUB","FOAL","KIT","LAMB"]},
+    {level:1,label:"WORDS BEFORE TIME",words:["BED","DINNER","HALF","OVER"]},
+    {level:2,label:"ELEMENTS",words:["GOLD","IRON","LEAD","MERCURY"]},
+    {level:3,label:"___ JACK",words:["CRACKER","FLAP","LUMBER","YELLOW"]}
+  ]},
+  {id:10,date:"2023-09-03",categories:[
+    {level:0,label:"CITRUS FRUITS",words:["GRAPEFRUIT","LEMON","LIME","ORANGE"]},
+    {level:1,label:"WORDS AFTER HAND",words:["BAG","MADE","SHAKE","WRITING"]},
+    {level:2,label:"BOARD GAMES",words:["CHESS","CLUE","RISK","SORRY"]},
+    {level:3,label:"THINGS THAT ARE PITCHED",words:["BALL","IDEA","ROOF","TENT"]}
+  ]},
+  {id:11,date:"2023-09-15",categories:[
+    {level:0,label:"DOG BREEDS",words:["BOXER","HUSKY","POINTER","PUG"]},
+    {level:1,label:"WORDS AFTER FIRE",words:["CRACKER","FLY","PLACE","WORKS"]},
+    {level:2,label:"CURRENCY",words:["BUCK","GRAND","NOTE","QUARTER"]},
+    {level:3,label:"SILENT LETTERS",words:["KNIGHT","PSALM","TSUNAMI","WRIST"]}
+  ]},
+  {id:12,date:"2023-09-28",categories:[
+    {level:0,label:"THINGS THAT DRIP",words:["CANDLE","FAUCET","ICICLE","NOSE"]},
+    {level:1,label:"WORDS BEFORE BALL",words:["BASE","BASKET","FIRE","SNOW"]},
+    {level:2,label:"FAMOUS GEORGES",words:["CLOONEY","LUCAS","STRAIT","WASHINGTON"]},
+    {level:3,label:"___ RING",words:["BOXING","EAR","ONION","SPRING"]}
+  ]},
+  {id:13,date:"2023-10-10",categories:[
+    {level:0,label:"WEATHER",words:["HAIL","RAIN","SLEET","SNOW"]},
+    {level:1,label:"WORDS AFTER BACK",words:["BONE","FIRE","PACK","YARD"]},
+    {level:2,label:"CARD GAMES",words:["BRIDGE","HEARTS","POKER","SPADES"]},
+    {level:3,label:"HIDDEN COLORS",words:["EMBRACE","GOLDENROD","PLATINUM","SCARECROW"]}
+  ]},
+  {id:14,date:"2023-10-24",categories:[
+    {level:0,label:"BAKED GOODS",words:["BROWNIE","COOKIE","MUFFIN","SCONE"]},
+    {level:1,label:"WORDS AFTER TOOTH",words:["ACHE","BRUSH","FAIRY","PASTE"]},
+    {level:2,label:"FICTIONAL DETECTIVES",words:["CLOUSEAU","COLOMBO","HOLMES","POIROT"]},
+    {level:3,label:"___ FLY",words:["BAR","BUTTER","FIRE","MAY"]}
+  ]},
+  {id:15,date:"2023-11-05",categories:[
+    {level:0,label:"THINGS WITH KEYS",words:["KEYBOARD","LOCKSMITH","PIANO","TYPEWRITER"]},
+    {level:1,label:"WORDS BEFORE LIGHT",words:["DAY","FLASH","MOON","SPOT"]},
+    {level:2,label:"DANCES",words:["FOXTROT","JIVE","POLKA","RUMBA"]},
+    {level:3,label:"FAMOUS TOMS",words:["CRUISE","HANKS","HARDY","JONES"]}
+  ]},
+  {id:16,date:"2023-11-18",categories:[
+    {level:0,label:"VEGETABLES",words:["BEET","CARROT","ONION","TURNIP"]},
+    {level:1,label:"___ WORK",words:["ART","BRAIN","FRAME","GROUND"]},
+    {level:2,label:"POKER TERMS",words:["BLUFF","CALL","FOLD","RAISE"]},
+    {level:3,label:"WORDS HIDDEN IN COUNTRIES",words:["CHILI","GERMANY","IRAN","SPAIN"]}
+  ]},
+  {id:17,date:"2023-12-01",categories:[
+    {level:0,label:"THINGS THAT SPARKLE",words:["DIAMOND","GLITTER","SEQUIN","STAR"]},
+    {level:1,label:"WORDS AFTER SNOW",words:["BALL","BOARD","FLAKE","MAN"]},
+    {level:2,label:"UNITS OF MEASUREMENT",words:["FOOT","METER","POUND","YARD"]},
+    {level:3,label:"___ BEAR",words:["GRIZZLY","KOALA","POLAR","TEDDY"]}
+  ]},
+  {id:18,date:"2023-12-15",categories:[
+    {level:0,label:"THINGS IN A GYM",words:["BENCH","MAT","RACK","WEIGHTS"]},
+    {level:1,label:"WORDS BEFORE WATER",words:["BACK","DEEP","FLOOD","RAIN"]},
+    {level:2,label:"FAMOUS PAIRS",words:["BONNIE","ROMEO","SALT","THUNDER"]},
+    {level:3,label:"___ HOUSE",words:["DOG","FULL","OPEN","WARE"]}
+  ]},
+  {id:19,date:"2024-01-05",categories:[
+    {level:0,label:"PARTS OF A BOOK",words:["CHAPTER","COVER","PAGE","SPINE"]},
+    {level:1,label:"WORDS AFTER WATER",words:["COLOR","FALL","MARK","PROOF"]},
+    {level:2,label:"CHESS PIECES",words:["BISHOP","KING","KNIGHT","ROOK"]},
+    {level:3,label:"___ PLANT",words:["EGG","HOUSE","POWER","RUBBER"]}
+  ]},
+  {id:20,date:"2024-01-18",categories:[
+    {level:0,label:"FRUITS",words:["APPLE","CHERRY","GRAPE","PEACH"]},
+    {level:1,label:"WORDS AFTER MOON",words:["BEAM","LIGHT","SHINE","WALK"]},
+    {level:2,label:"MAGIC WORDS",words:["ABRACADABRA","HOCUS","PRESTO","SHAZAM"]},
+    {level:3,label:"___ CAKE",words:["CUP","CHEESE","PAN","SHORT"]}
+  ]},
+  {id:21,date:"2024-02-01",categories:[
+    {level:0,label:"THINGS THAT BUZZ",words:["ALARM","BEE","PHONE","RAZOR"]},
+    {level:1,label:"WORDS BEFORE ROOM",words:["BALL","BED","CLASS","SHOW"]},
+    {level:2,label:"FAMOUS WILLIAMS",words:["PRINCE","ROBIN","SERENA","SHAKESPEARE"]},
+    {level:3,label:"DOUBLE MEANING",words:["BAT","CRANE","MOLE","SEAL"]}
+  ]},
+  {id:22,date:"2024-02-14",categories:[
+    {level:0,label:"THINGS THAT ARE RED",words:["CHERRY","FIRE TRUCK","ROSE","STOP SIGN"]},
+    {level:1,label:"WORDS AFTER HEART",words:["BEAT","BREAK","BURN","FELT"]},
+    {level:2,label:"LOVE SONGS",words:["ALWAYS","DEVOTED","ENDLESS","FOREVER"]},
+    {level:3,label:"___ ARROW",words:["BOW","CUPID","NARROW","STRAIGHT"]}
+  ]},
+  {id:23,date:"2024-03-01",categories:[
+    {level:0,label:"TREES",words:["BIRCH","ELM","MAPLE","OAK"]},
+    {level:1,label:"WORDS BEFORE FALL",words:["DOWN","FREE","NIGHT","RAIN"]},
+    {level:2,label:"SHAKESPEARE PLAYS",words:["HAMLET","MACBETH","OTHELLO","TEMPEST"]},
+    {level:3,label:"___ WOOD",words:["COTTON","DRIFT","HOLLY","PLY"]}
+  ]},
+  {id:24,date:"2024-03-15",categories:[
+    {level:0,label:"BREAKFAST ITEMS",words:["BACON","CEREAL","PANCAKE","WAFFLE"]},
+    {level:1,label:"WORDS AFTER BOOK",words:["CASE","END","MARK","WORM"]},
+    {level:2,label:"SPACE TERMS",words:["COMET","NEBULA","ORBIT","QUASAR"]},
+    {level:3,label:"___ FISH",words:["CAT","JELLY","STAR","SWORD"]}
+  ]},
+  {id:25,date:"2024-04-01",categories:[
+    {level:0,label:"THINGS THAT FLOAT",words:["BOAT","BUBBLE","CORK","DUCK"]},
+    {level:1,label:"WORDS BEFORE DREAM",words:["DAY","LUCID","PIPE","WET"]},
+    {level:2,label:"INSTRUMENTS",words:["BASS","CELLO","HARP","VIOLA"]},
+    {level:3,label:"APRIL FOOL",words:["GAG","HOAX","PRANK","TRICK"]}
+  ]},
+  {id:26,date:"2024-04-15",categories:[
+    {level:0,label:"FLOWERS",words:["DAISY","LILY","ROSE","TULIP"]},
+    {level:1,label:"WORDS AFTER SUN",words:["BURN","FLOWER","RISE","SET"]},
+    {level:2,label:"FAMOUS PAINTINGS",words:["GUERNICA","MONA LISA","STARRY NIGHT","THE SCREAM"]},
+    {level:3,label:"___ SHOT",words:["BIG","BUCK","LONG","MOON"]}
+  ]},
+  {id:27,date:"2024-05-01",categories:[
+    {level:0,label:"THINGS IN A PARK",words:["BENCH","FOUNTAIN","PATH","TREE"]},
+    {level:1,label:"WORDS BEFORE WORK",words:["CLOCK","FIRE","HOME","NET"]},
+    {level:2,label:"MYTHOLOGICAL CREATURES",words:["DRAGON","GRIFFIN","PHOENIX","UNICORN"]},
+    {level:3,label:"___ POINT",words:["BALL","CHECK","GUN","STAND"]}
+  ]},
+  {id:28,date:"2024-05-15",categories:[
+    {level:0,label:"THINGS THAT TICK",words:["BOMB","CLOCK","HEART","METRONOME"]},
+    {level:1,label:"WORDS AFTER GOLD",words:["DIGGER","FISH","MINE","RUSH"]},
+    {level:2,label:"FAMOUS BRIDGES",words:["BROOKLYN","GOLDEN GATE","LONDON","TOWER"]},
+    {level:3,label:"___ CALL",words:["BIRD","CURTAIN","LAST","ROLL"]}
+  ]},
+  {id:29,date:"2024-06-01",categories:[
+    {level:0,label:"BEACH ITEMS",words:["TOWEL","UMBRELLA","SAND","SHELL"]},
+    {level:1,label:"WORDS BEFORE WAVE",words:["COLD","HEAT","MICRO","SHOCK"]},
+    {level:2,label:"OCEAN CREATURES",words:["DOLPHIN","OCTOPUS","SEAHORSE","WHALE"]},
+    {level:3,label:"___ BOARD",words:["CARD","OVER","SKATE","SURF"]}
+  ]},
+  {id:30,date:"2024-06-15",categories:[
+    {level:0,label:"THINGS WITH STRINGS",words:["BOW","GUITAR","KITE","PUPPET"]},
+    {level:1,label:"WORDS AFTER RAIN",words:["BOW","COAT","DROP","STORM"]},
+    {level:2,label:"FAMOUS CITIES",words:["PARIS","ROME","TOKYO","VIENNA"]},
+    {level:3,label:"___ BONE",words:["BACK","JAW","TROM","WISH"]}
+  ]}
+];
 
-// Raw GitHub JSON via free CORS proxy (no key, no account)
-const RAW_URL = 'https://raw.githubusercontent.com/Eyefyre/NYT-Connections-Answers/main/connections.json';
-const PROXY   = 'https://corsproxy.io/?' + encodeURIComponent(RAW_URL);
+// ── Colour map ────────────────────────────────────────────────────────────────
+const LEVEL_COLORS = [
+  { accent:0xe8c547, hex:'#e8c547' },
+  { accent:0x6dbf8a, hex:'#6dbf8a' },
+  { accent:0x6aaed6, hex:'#6aaed6' },
+  { accent:0xb07fd4, hex:'#b07fd4' }
+];
 
 function shuffle(arr){
   const a=[...arr];
@@ -53,49 +226,18 @@ function shuffle(arr){
   return a;
 }
 
-// ── Parse one raw puzzle entry into our internal format ───────────────────────
-// Shape: { date, startingGroups:[{level,members,groupName}] }
-//     OR { date, answers:[{category,connection,items}] }
-function parsePuzzle(raw) {
-  let cats;
-
-  if (raw.answers) {
-    // v1 format
-    cats = raw.answers.map(a => {
-      const info = LEVEL_MAP[a.category] || LEVEL_MAP.yellow;
-      return { ...info, label: a.connection.toUpperCase(), words: a.items.map(w=>w.toUpperCase()) };
-    });
-  } else if (raw.startingGroups) {
-    // v2 format
-    cats = raw.startingGroups.map(g => {
-      const key = ['yellow','green','blue','purple'][g.level] || 'yellow';
-      const info = LEVEL_MAP[key];
-      return { ...info, label: g.groupName.toUpperCase(), words: g.members.map(w=>w.toUpperCase()) };
-    });
-  } else {
-    return null;
-  }
-
-  // sort yellow→purple
-  cats.sort((a,b)=>a.level-b.level);
-  return { date: raw.date || '?', id: raw.id || '?', categories: cats };
-}
-
-async function fetchRandomPuzzle() {
-  const res  = await fetch(PROXY, { cache: 'force-cache' });
-  if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-  const all  = await res.json();
-  if (!Array.isArray(all) || all.length === 0) throw new Error('Empty response');
-
-  // Pick randomly from the last 200 puzzles (more variety, still recent & hard)
-  const pool = all.slice(Math.max(0, all.length - 200));
-  // try up to 5 times to get a parseable one
-  for (let i = 0; i < 5; i++) {
-    const raw    = pool[Math.floor(Math.random() * pool.length)];
-    const puzzle = parsePuzzle(raw);
-    if (puzzle && puzzle.categories.length === 4) return puzzle;
-  }
-  throw new Error('Could not parse puzzle');
+function getRandomPuzzle(){
+  const raw = PUZZLES[Math.floor(Math.random()*PUZZLES.length)];
+  return {
+    date: raw.date,
+    id: raw.id,
+    categories: raw.categories.map((c,i) => ({
+      ...LEVEL_COLORS[c.level],
+      level: c.level,
+      label: c.label,
+      words: c.words.map(w=>w.toUpperCase())
+    }))
+  };
 }
 
 // ── Phaser ────────────────────────────────────────────────────────────────────
@@ -320,34 +462,19 @@ class ClusterScene extends Phaser.Scene {
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
-function show(id){
-  ['loading','err','game-wrapper'].forEach(s=>{
-    document.getElementById(s).style.display = s===id?(s==='game-wrapper'?'flex':'block'):'none';
-  });
-}
-
-async function startGame(){
-  show('loading');
-  try {
-    const puzzle = await fetchRandomPuzzle();
-    document.getElementById('puzzle-meta').textContent = `NYT PUZZLE #${puzzle.id}  ·  ${puzzle.date}`;
-    show('game-wrapper');
-    if(phaserGame){
-      phaserGame.scene.getScene('ClusterScene').scene.restart({puzzle});
-    } else {
-      phaserGame = new Phaser.Game({
-        type:Phaser.AUTO, width:W, height:H, backgroundColor:'#0e0e0e',
-        parent:document.getElementById('game-wrapper'),
-        scene:[ClusterScene], resolution:DPR,
-        scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.CENTER_HORIZONTALLY,zoom:1/DPR}
-      });
-      setTimeout(()=>phaserGame.scene.start('ClusterScene',{puzzle}),150);
-    }
-  } catch(e){
-    console.error(e);
-    const el=document.getElementById('err');
-    el.innerHTML=`Could not load puzzle — check your internet connection.<br><span style="color:#444;font-size:9px;">${e.message}</span>`;
-    show('err');
+function startGame(){
+  const puzzle = getRandomPuzzle();
+  document.getElementById('puzzle-meta').textContent = `PUZZLE #${puzzle.id}  ·  ${puzzle.date}`;
+  if(phaserGame){
+    phaserGame.scene.getScene('ClusterScene').scene.restart({puzzle});
+  } else {
+    phaserGame = new Phaser.Game({
+      type:Phaser.AUTO, width:W, height:H, backgroundColor:'#0e0e0e',
+      parent:document.getElementById('game-wrapper'),
+      scene:[ClusterScene], resolution:DPR,
+      scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.CENTER_HORIZONTALLY,zoom:1/DPR}
+    });
+    setTimeout(()=>phaserGame.scene.start('ClusterScene',{puzzle}),150);
   }
 }
 
@@ -355,4 +482,3 @@ startGame();
 </script>
 </body>
 </html>
-

@@ -4,232 +4,131 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CLUSTER</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
 <style>
-  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-  html,body{width:100%;min-height:100vh;background:#0e0e0e;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
-  #top-bar{width:100%;max-width:540px;padding:24px 20px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;}
-  #top-bar h1{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#f0ede6;letter-spacing:5px;text-transform:uppercase;}
-  #top-bar p{font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;font-family:'DM Mono',monospace;}
-  #divider{width:100%;max-width:540px;height:1px;background:linear-gradient(to right,transparent,#2a2a2a,transparent);margin-bottom:12px;}
-  #loading{font-family:'DM Mono',monospace;font-size:11px;color:#3a3a3a;letter-spacing:3px;text-transform:uppercase;margin-top:50px;text-align:center;line-height:2;}
-  #loading .dots span{animation:blink 1.2s infinite;}
-  #loading .dots span:nth-child(2){animation-delay:.2s;}
-  #loading .dots span:nth-child(3){animation-delay:.4s;}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
-  #error-msg{display:none;font-family:'DM Mono',monospace;font-size:11px;color:#c0392b;letter-spacing:2px;text-align:center;margin-top:40px;line-height:2;}
-  #game-wrapper{width:100%;max-width:540px;display:flex;justify-content:center;}
-  #game-wrapper canvas{width:100%!important;height:auto!important;}
+ *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+ html,body{
+   width:100%;min-height:100vh;
+   background:#090909;
+   display:flex;flex-direction:column;align-items:center;
+   overflow-x:hidden;
+   position:relative;
+ }
+ /* subtle noise overlay */
+ body::before{
+   content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+   opacity:0.028;
+   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+   background-size:180px;
+ }
+ /* glow */
+ body::after{
+   content:'';position:fixed;top:-40%;left:50%;transform:translateX(-50%);
+   width:600px;height:600px;
+   background:radial-gradient(circle,rgba(207,196,162,0.03) 0%,transparent 70%);
+   pointer-events:none;z-index:0;
+ }
+  #chrome{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center;}
+ #top-bar{
+   width:100%;max-width:520px;padding:36px 20px 0;
+   display:flex;flex-direction:column;align-items:center;gap:0;
+ }
+ #top-bar .issue{
+   font-family:'DM Mono',monospace;font-size:9px;color:#2a2a2a;
+   letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;
+ }
+ #top-bar h1{
+   font-family:'Instrument Serif',serif;font-size:52px;font-weight:400;
+   color:#e8e4dc;letter-spacing:1px;line-height:1;
+ }
+ #top-bar .subtitle{
+   font-family:'DM Mono',monospace;font-size:9px;color:#3a3a3a;
+   letter-spacing:3px;text-transform:uppercase;margin-top:8px;
+ }
+
+ #rule{
+   width:100%;max-width:520px;height:1px;margin:20px 0 16px;
+   background:linear-gradient(to right,transparent,#1e1e1e 20%,#1e1e1e 80%,transparent);
+ }
+ #toolbar{
+   width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;
+   padding:0 20px 14px;
+ }
+ #toolbar .left,#toolbar .right{display:flex;gap:8px;align-items:center;}
+ .tool-btn{
+   font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;
+   color:#333;background:none;border:1px solid #1a1a1a;border-radius:100px;
+   padding:6px 14px;cursor:pointer;transition:all 0.3s ease;
+ }
+ .tool-btn:hover{color:#888;border-color:#333;}
+ .tool-btn.accent{color:#090909;background:#cfc4a2;border-color:#cfc4a2;font-weight:500;}
+ .tool-btn.accent:hover{background:#e0d7b8;border-color:#e0d7b8;}
+ .tool-btn.check{padding:8px 24px;font-size:10px;letter-spacing:3px;position:relative;}
+ .tool-btn.check .count{
+   display:inline-block;margin-left:6px;
+   min-width:14px;height:14px;line-height:14px;text-align:center;
+   border-radius:7px;font-size:8px;letter-spacing:0;
+   background:#2a2a2a;color:#555;
+   transition:all 0.3s ease;
+ }
+ .tool-btn.check.accent .count{background:rgba(0,0,0,0.15);color:#090909;}
+ .tool-btn.danger{color:#6b3a3a;border-color:#2a1a1a;}
+ .tool-btn.danger:hover{color:#c25050;border-color:#3a2020;}
+ #lives-row{display:flex;align-items:center;gap:6px;}
+ #lives-row .label{font-family:'DM Mono',monospace;font-size:8px;color:#2a2a2a;letter-spacing:2px;text-transform:uppercase;margin-right:4px;}
+ .life-pip{width:6px;height:6px;border-radius:50%;background:#cfc4a2;transition:all 0.5s ease;}
+ .life-pip.spent{background:#1a1a1a;transform:scale(0.7);}
+ #game-wrapper{
+   width:100%;max-width:520px;display:flex;justify-content:center;
+   position:relative;z-index:1;
+ }
+ #game-wrapper canvas{width:100%!important;height:auto!important;}
+ #msg-bar{
+   width:100%;max-width:520px;height:24px;
+   display:flex;justify-content:center;align-items:center;
+   font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;
+   color:#444;text-transform:uppercase;
+   transition:all 0.4s ease;margin-top:2px;
+ }
+ #footer{
+   width:100%;max-width:520px;padding:12px 20px 24px;
+   display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+   align-items:center;
+ }
 </style>
 </head>
 <body>
-<div id="top-bar">
-  <h1>Cluster</h1>
-  <p>Group four words that belong together</p>
+<div id="chrome">
+ <div id="top-bar">
+   <div class="issue" id="puzzle-meta"></div>
+   <h1>Cluster</h1>
+   <div class="subtitle">Group four words that share a connection</div>
+ </div>
+ <div id="rule"></div>
+ <div id="toolbar">
+   <div class="left">
+     <div id="lives-row">
+       <span class="label">Lives</span>
+       <span class="life-pip" id="pip0"></span>
+       <span class="life-pip" id="pip1"></span>
+       <span class="life-pip" id="pip2"></span>
+       <span class="life-pip" id="pip3"></span>
+     </div>
+   </div>
+   <div class="right">
+     <button class="tool-btn" id="btn-clue" onclick="gameAction('clue')">Clue</button>
+     <button class="tool-btn danger" id="btn-quit" onclick="gameAction('quit')">New Game</button>
+   </div>
+ </div>
+ <div id="game-wrapper"></div>
+ <div id="msg-bar"></div>
+ <div id="footer">
+   <button class="tool-btn" onclick="gameAction('shuffle')">Shuffle</button>
+   <button class="tool-btn" onclick="gameAction('clear')">Clear</button>
+   <button class="tool-btn check" id="btn-submit" onclick="gameAction('submit')">Check <span class="count" id="sel-count">0/4</span></button>
+ </div>
 </div>
-<div id="divider"></div>
-<div id="loading">
-  Generating puzzle<div class="dots"><span>.</span><span>.</span><span>.</span></div>
-</div>
-<div id="error-msg"></div>
-<div id="game-wrapper"></div>
+
 
 <script>
-//  Config
-  {accent:0xe8c547,hex:'#e8c547'},
-  {accent:0x6dbf8a,hex:'#6dbf8a'},
-  {accent:0x6aaed6,hex:'#6aaed6'},
-  {accent:0xb07fd4,hex:'#b07fd4'}
-];
-
-const DPR=Math.min(window.devicePixelRatio||1,2);
-const LOGICAL_W=Math.min(500,window.innerWidth-8);
-const W=Math.round(LOGICAL_W*DPR);
-const H=Math.round(620*DPR);
-
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
-  return a;
-}
-
-//  AI puzzle generation 
-const THEMES = [
-  'science and nature', 'pop culture and movies', 'food and cooking',
-  'sports and athletes', 'music and bands', 'history and geography',
-  'technology and computing', 'art and literature', 'animals and biology',
-  'idioms and expressions'
-];
-
-async function generatePuzzle() {
-  const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
-
-  const prompt = `You are the puzzle editor for NYT Connections. Create one Connections puzzle on the theme: "${theme}".
-
-Rules:
-- 4 categories, each with exactly 4 words
-- YELLOW (easiest): straightforward grouping, obvious connection
-- GREEN (medium): requires some thought
-- BLUE (hard): tricky, involves wordplay or double meanings
-- PURPLE (hardest): very tricky, misleading — words seem to belong elsewhere but share a hidden link (e.g. "words that follow FIRE", "__ + STONE", homophones of something, etc.)
-
-Important:
-- Words must be 1-2 words max, ALL CAPS
-- Make the purple category genuinely deceptive — the words should LOOK like they belong to other categories
-- Do NOT make categories that are too obvious like "TYPES OF PASTA" or "COLORS"
-- Aim for NYT difficulty — something that would make people think hard
-
-Respond ONLY with valid JSON, no explanation, no markdown:
-{
-  "categories": [
-    {"level": 0, "label": "YELLOW LABEL", "words": ["W1","W2","W3","W4"]},
-    {"level": 1, "label": "GREEN LABEL",  "words": ["W1","W2","W3","W4"]},
-    {"level": 2, "label": "BLUE LABEL",   "words": ["W1","W2","W3","W4"]},
-    {"level": 3, "label": "PURPLE LABEL", "words": ["W1","W2","W3","W4"]}
-  ]
-}`;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-
-  const data = await res.json();
-  const text = data.content.find(b => b.type === 'text')?.text || '';
-  const clean = text.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(clean);
-
- // Attach accent colours
-  return {
-    categories: parsed.categories.map(cat => ({
-      ...cat,
-      label: cat.label.toUpperCase(),
-      words: cat.words.map(w => w.toUpperCase()),
-      ...ACCENTS[cat.level]
-    })),
-    theme
-  };
-}
-//  Phaser Scene
-class ClusterScene extends Phaser.Scene {
-  constructor(){super({key:'ClusterScene'});}
-  init(data){this.puzzleData=data.puzzle;}
-
-  create(){
-    this.W=W; this.H=H;
-    this.allTiles=shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
-    this.selected=new Set();
-    this.solvedCats=[];
-    this.mistakes=0;
-    this.maxMistakes=4;
-    this.gameOver=false;
-    this.animLock=false;
-    this.tileObjs=[];
-    this.msgText=null;
-    this._msgTimer=null;
-    this.submitRef=null;
-    this.fullRedraw();
-  }
-
-  s(n){return Math.round(n*DPR);}
-  get PAD(){return this.s(16);}
-  get GAP(){return this.s(8);}
-  get COLS(){return 4;}
-  get TILE_W(){return Math.floor((W-this.PAD*2-this.GAP*3)/4);}
-  get TILE_H(){return this.s(64);}
-  get SOL_H(){return this.s(52);}
-  get GRID_TOP(){return this.solvedCats.length*(this.SOL_H+this.GAP);}
-
-  tileKey(t){return t.catIndex+'|'+t.word;}
-  activeTiles(){return this.allTiles.filter(t=>!this.solvedCats.includes(t.catIndex));}
-
-  fullRedraw(){
-    this.children.removeAll(true);
-    this.tileObjs=[];
-    this.drawSolvedRows();
-    this.drawTiles();
-    this.drawBottomUI();
-  }
-
-  drawSolvedRows(){
-    this.solvedCats.forEach((ci,row)=>{
-      const cat=this.puzzleData.categories[ci];
-      const x=this.PAD,y=row*(this.SOL_H+this.GAP),w=W-this.PAD*2;
-      const g=this.add.graphics();
-      g.fillStyle(0x1c1c1c,1);g.fillRoundedRect(x,y,w,this.SOL_H,this.s(6));
-      g.fillStyle(cat.accent,1);g.fillRect(x,y,this.s(3),this.SOL_H);
-      g.fillStyle(cat.accent,0.07);g.fillRoundedRect(x,y,w,this.SOL_H,this.s(6));
-      this.add.text(x+this.s(16),y+this.s(10),cat.label,{fontFamily:'DM Mono',fontSize:`${this.s(9)}px`,color:cat.hex,letterSpacing:this.s(2)});
-      this.add.text(x+this.s(16),y+this.s(27),cat.words.join('  ·  '),{fontFamily:'DM Mono',fontSize:`${this.s(12)}px`,fontStyle:'bold',color:'#d0cdc6'});
-    });
-  }
-
-  drawTiles(){
-    this.activeTiles().forEach((tile,i)=>{
-      const col=i%this.COLS,row=Math.floor(i/this.COLS);
-      const x=this.PAD+col*(this.TILE_W+this.GAP);
-      const y=this.GRID_TOP+row*(this.TILE_H+this.GAP);
-      const sel=this.selected.has(this.tileKey(tile));
-      const g=this.add.graphics();
-      this.paintTile(g,x,y,sel,false);
-      const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
-        fontFamily:'DM Mono',fontSize:`${this.s(11)}px`,fontStyle:'bold',
-        color:sel?'#0e0e0e':'#b0ada6',align:'center',wordWrap:{width:this.TILE_W-this.s(12)}
-      }).setOrigin(0.5,0.5);
-      const zone=this.add.zone(x,y,this.TILE_W,this.TILE_H).setOrigin(0,0).setInteractive({cursor:'pointer'});
-      zone.on('pointerover',()=>{if(!this.selected.has(this.tileKey(tile)))this.paintTile(g,x,y,false,true);});
-      zone.on('pointerout', ()=>{if(!this.selected.has(this.tileKey(tile)))this.paintTile(g,x,y,false,false);});
-      zone.on('pointerup',  ()=>this.onTileClick(tile,g,txt,x,y));
-      this.tileObjs.push({tile,g,txt,zone,x,y});
-    });
-  }
-
-  paintTile(g,x,y,sel,hover){
-    g.clear();
-    const r=this.s(7);
-    if(sel){g.fillStyle(0xcfc4a2,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
-    else if(hover){g.fillStyle(0x212121,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);g.lineStyle(this.s(1),0x3c3c3c,1);g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
-    else{g.fillStyle(0x181818,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);g.lineStyle(this.s(1),0x272727,1);g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
-  } 
-    drawBottomUI(){
-    const rows=Math.ceil(this.activeTiles().length/this.COLS)||0;
-    const baseY=this.GRID_TOP+rows*(this.TILE_H+this.GAP)+this.s(14);
-    this.msgText=this.add.text(W/2,baseY,'',{fontFamily:'DM Mono',fontSize:`${this.s(11)}px`,color:'#888',letterSpacing:this.s(2)}).setOrigin(0.5,0);
-    const dotsY=baseY+this.s(36);
-    this.add.text(this.PAD,dotsY+this.s(5),'LIVES',{fontFamily:'DM Mono',fontSize:`${this.s(8)}px`,color:'#333',letterSpacing:this.s(2)}).setOrigin(0,0.5);
-    for(let i=0;i<this.maxMistakes;i++){
-      const g=this.add.graphics();
-      const cx=W/2-this.s(30)+i*this.s(20);
-      g.fillStyle(i<this.mistakes?0x252525:0xcfc4a2,1);
-      g.fillCircle(cx,dotsY,this.s(5));
-    }
-    const btnY=dotsY+this.s(44);
-    this.makeBtn(W/2-this.s(116),btnY,this.s(96),this.s(34),'SHUFFLE',()=>this.doShuffle());
-    this.makeBtn(W/2,            btnY,this.s(96),this.s(34),'CLEAR',  ()=>this.doClear());
-    this.submitRef=this.makeBtn(W/2+this.s(116),btnY,this.s(96),this.s(34),'SUBMIT',()=>this.doSubmit(),true);
-    this.refreshSubmit();
-  }
-
-  makeBtn(cx,cy,w,h,label,cb,isSubmit=false){
-    const x=cx-w/2,r=h/2;
-    const g=this.add.graphics();
-    const lbl=this.add.text(cx,cy,label,{fontFamily:'DM Mono',fontSize:`${this.s(10)}px`,fontStyle:'bold',color:'#3a3a3a',letterSpacing:this.s(2)}).setOrigin(0.5,0.5);
-    const draw=(state)=>{
-      g.clear();
-        if(state==='disabled'){g.fillStyle(0x2a2a2a,1);g.fillRoundedRect(x,cy-h/2,w,h,r);}
-        else if(state==='hover'){g.fillStyle(0x3c3c3c,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}
-        else{g.fillStyle(0x333333,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}
-        draw('normal');
-    const zone=this.add.zone(x,cy-h/2,w,h).setOrigin(0,0).setInteractive({cursor:'pointer'});
-    zone.on('pointerover',()=>{if(isSubmit&&this.selected.size!==4)return;draw('hover');});
-    zone.on('pointerout', ()=>{if(isSubmit&&this.selected.size===4){draw('active');return;}draw('normal');});
-    zone.on('pointerup',  ()=>{if(!this.gameOver&&!this.animLock)cb();});
-    return{g,lbl,draw};
-  }
-
-  refreshSubmit(){if(this.submitRef)this.submitRef.draw(this.selected.size===4?'active':'normal');}

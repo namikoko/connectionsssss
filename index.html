@@ -391,3 +391,41 @@ const DPR = Math.min(window.devicePixelRatio||5, 5);
 const W   = Math.round(Math.min(500, window.innerWidth-18)*DPR);
 const H   = Math.round(310*DPR);
 let phaserGame = null;
+class ClusterScene extends Phaser.Scene {
+ constructor(){ super({key:'ClusterScene'}); }
+ init(data){ this.puzzleData=data.puzzle; }
+ create(){
+   this.allTiles   = shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
+   this.selected   = new Set();
+   this.solvedCats = [];
+   this.mistakes   = 0;
+   this.maxMistakes= 4;
+   this.gameOver   = false;
+   this.animLock   = false;
+   this.tileObjs   = [];
+
+
+   updateLives(0, this.maxMistakes);
+   showMsg('', '#444', 0);
+   setToolbarEnabled(true);
+   updateSubmitBtn(false, 0);
+   this.fullRedraw(true);
+ }
+create(){
+   this.allTiles   = shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
+   this.selected   = new Set();
+   this.solvedCats = [];
+   this.mistakes   = 0;
+   this.maxMistakes= 4;
+   this.gameOver   = false;
+   this.animLock   = false;
+   this.tileObjs   = [];
+
+
+   updateLives(0, this.maxMistakes);
+   showMsg('', '#444', 0);
+   setToolbarEnabled(true);
+   updateSubmitBtn(false, 0);
+   this.fullRedraw(true);
+ }
+

@@ -525,3 +525,56 @@ this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,e
      this.animLock=false;
    });
  }
+ doClear(){
+   if(this.gameOver||this.animLock) return;
+   this.selected.clear();
+   this.tileObjs.forEach(o=>{
+     this.paintTile(o.g,o.x,o.y,false,false);
+     o.txt.setColor('#8a877f');
+   });
+   updateSubmitBtn(false, 0);
+ }
+
+
+ doClue(){
+   if(this.gameOver||this.animLock) return;
+   if(this.mistakes>=this.maxMistakes-1){
+     showMsg('NOT ENOUGH LIVES','#c25050',1800);
+     return;
+   }
+   const unsolved=this.puzzleData.categories.map((_,i)=>i).filter(i=>!this.solvedCats.includes(i));
+   if(unsolved.length===0) return;
+   const ci=unsolved[Math.floor(Math.random()*unsolved.length)];
+   const cat=this.puzzleData.categories[ci];
+   this.mistakes++;
+   updateLives(this.mistakes,this.maxMistakes);
+   showMsg('CLUE \u2014 '+cat.label, cat.hex, 3000);
+   const catTiles=this.tileObjs.filter(o=>o.tile.catIndex===ci);
+   catTiles.forEach((o,idx)=>{
+     const origColor=this.selected.has(this.tileKey(o.tile))?'#0a0a0a':'#8a877f';
+     // staggered wave pulse
+     this.time.delayedCall(idx*80,()=>{
+       o.txt.setColor(cat.hex);
+       // repaint tile with accent border
+       o.g.clear();
+       const r=this.s(8);
+       o.g.fillStyle(0x111111,1);
+       o.g.fillRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       o.g.lineStyle(1,cat.accent,0.5);
+       o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       this.tweens.add({targets:[o.g,o.txt],scaleX:1.08,scaleY:1.08,duration:200,yoyo:true,ease:'Sine.easeInOut'});
+     });
+     this.time.delayedCall(1400+idx*80,()=>{
+       if(o.txt&&o.txt.active) o.txt.setColor(origColor);
+       if(o.g&&o.g.active){
+         const sel=this.selected.has(this.tileKey(o.tile));
+         this.paintTile(o.g,o.x,o.y,sel,false);
+       }
+     });
+   });
+   if(this.mistakes>=this.maxMistakes){
+     this.time.delayedCall(1600,()=>this.endGame(false));
+   }
+ }
+
+

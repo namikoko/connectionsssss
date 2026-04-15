@@ -132,3 +132,113 @@
 
 
 <script>
+// ── Embedded puzzles ──────────────────────────────────────────────────────────
+const PUZZLES = [
+ {id:1,date:"2023-06-12",categories:[
+   {level:0,label:"FISH",words:["BASS","FLOUNDER","PIKE","TROUT"]},
+   {level:1,label:"FIRE ___",words:["ANT","DRILL","ISLAND","WORK"]},
+   {level:2,label:"STARTING WITH BODY PARTS",words:["ARMADILLO","ELBOW ROOM","KNEECAP","SHINDIG"]},
+   {level:3,label:"___ GAME",words:["BALL","BOARD","MIND","VIDEO"]}
+ ]},
+ {id:2,date:"2023-06-13",categories:[
+   {level:0,label:"SLENDER",words:["LEAN","SLIM","SLIGHT","THIN"]},
+   {level:1,label:"MICHAEL ___",words:["B. JORDAN","CERA","JACKSON","SCOTT"]},
+   {level:2,label:"BEGINS WITH A FRUIT",words:["APPLESAUCE","GRAPEVINE","LIMELIGHT","PEACHFUZZ"]},
+   {level:3,label:"PALINDROMES",words:["CIVIC","KAYAK","LEVEL","RACECAR"]}
+ ]},
+ {id:3,date:"2023-06-20",categories:[
+   {level:0,label:"THINGS THAT ARE ROUND",words:["BALL","GLOBE","HOOP","RING"]},
+   {level:1,label:"SYNONYMS FOR STEAL",words:["LIFT","NAB","PINCH","SWIPE"]},
+   {level:2,label:"___ BOARD",words:["CARD","CHALK","DART","SKATE"]},
+   {level:3,label:"TYPES OF HUMOR",words:["DRY","DARK","SLAPSTICK","WIT"]}
+ ]},
+ {id:4,date:"2023-07-05",categories:[
+   {level:0,label:"PLACES TO SIT",words:["BENCH","CHAIR","COUCH","STOOL"]},
+   {level:1,label:"WORDS AFTER BREAK",words:["AWAY","DOWN","OUT","THROUGH"]},
+   {level:2,label:"GREEK LETTERS",words:["ALPHA","BETA","DELTA","OMEGA"]},
+   {level:3,label:"___ LINE",words:["BOTTOM","FINISH","PUNCH","SIDE"]}
+ ]},
+ {id:5,date:"2023-07-12",categories:[
+   {level:0,label:"COFFEE DRINKS",words:["AMERICANO","CAPPUCCINO","ESPRESSO","LATTE"]},
+   {level:1,label:"WAYS TO COOK EGGS",words:["BOILED","FRIED","POACHED","SCRAMBLED"]},
+   {level:2,label:"___ STONE",words:["CORNER","KEY","LIME","MILE"]},
+   {level:3,label:"TV SHOW GENRES",words:["DRAMA","MYSTERY","REALITY","SITCOM"]}
+ ]},
+ {id:6,date:"2023-07-20",categories:[
+   {level:0,label:"PASTA SHAPES",words:["BOW TIE","PENNE","RIGATONI","SPAGHETTI"]},
+   {level:1,label:"WORDS BEFORE HOUSE",words:["BIRD","DOG","FIRE","GREEN"]},
+   {level:2,label:"FAMOUS JACKS",words:["BLACK","CRACKER","HAMMER","KNIFE"]},
+   {level:3,label:"DOUBLE LETTERS",words:["BALLOON","BROCCOLI","COFFEE","TOFFEE"]}
+ ]},
+ {id:7,date:"2023-08-01",categories:[
+   {level:0,label:"THINGS IN A WALLET",words:["CASH","CARD","ID","RECEIPT"]},
+   {level:1,label:"SHADES OF BLUE",words:["COBALT","NAVY","SKY","TEAL"]},
+   {level:2,label:"ROCK BANDS",words:["CREAM","KISS","QUEEN","RUSH"]},
+   {level:3,label:"___ POOL",words:["CAR","DEAD","GENE","WHIRL"]}
+ ]},
+ {id:8,date:"2023-08-10",categories:[
+   {level:0,label:"FOOTWEAR",words:["BOOT","LOAFER","SANDAL","SNEAKER"]},
+   {level:1,label:"WORDS AFTER SPEED",words:["BOAT","BUMP","DIAL","WAY"]},
+   {level:2,label:"TYPES OF DANCE",words:["SALSA","SWING","TANGO","WALTZ"]},
+   {level:3,label:"THINGS THAT SNAP",words:["FINGERS","JUDGEMENT","PEAS","TURTLE"]}
+ ]},
+ {id:9,date:"2023-08-22",categories:[
+   {level:0,label:"BABY ANIMALS",words:["CUB","FOAL","KIT","LAMB"]},
+   {level:1,label:"WORDS BEFORE TIME",words:["BED","DINNER","HALF","OVER"]},
+   {level:2,label:"ELEMENTS",words:["GOLD","IRON","LEAD","MERCURY"]},
+   {level:3,label:"___ JACK",words:["CRACKER","FLAP","LUMBER","YELLOW"]}
+ ]},
+ {id:10,date:"2023-09-03",categories:[
+   {level:0,label:"CITRUS FRUITS",words:["GRAPEFRUIT","LEMON","LIME","ORANGE"]},
+   {level:1,label:"WORDS AFTER HAND",words:["BAG","MADE","SHAKE","WRITING"]},
+   {level:2,label:"BOARD GAMES",words:["CHESS","CLUE","RISK","SORRY"]},
+   {level:3,label:"THINGS THAT ARE PITCHED",words:["BALL","IDEA","ROOF","TENT"]}
+ ]},
+ {id:11,date:"2023-09-15",categories:[
+   {level:0,label:"DOG BREEDS",words:["BOXER","HUSKY","POINTER","PUG"]},
+   {level:1,label:"WORDS AFTER FIRE",words:["CRACKER","FLY","PLACE","WORKS"]},
+   {level:2,label:"CURRENCY",words:["BUCK","GRAND","NOTE","QUARTER"]},
+   {level:3,label:"SILENT LETTERS",words:["KNIGHT","PSALM","TSUNAMI","WRIST"]}
+ ]},
+ {id:12,date:"2023-09-28",categories:[
+   {level:0,label:"THINGS THAT DRIP",words:["CANDLE","FAUCET","ICICLE","NOSE"]},
+   {level:1,label:"WORDS BEFORE BALL",words:["BASE","BASKET","FIRE","SNOW"]},
+   {level:2,label:"FAMOUS GEORGES",words:["CLOONEY","LUCAS","STRAIT","WASHINGTON"]},
+   {level:3,label:"___ RING",words:["BOXING","EAR","ONION","SPRING"]}
+ ]},
+ {id:13,date:"2023-10-10",categories:[
+   {level:0,label:"WEATHER",words:["HAIL","RAIN","SLEET","SNOW"]},
+   {level:1,label:"WORDS AFTER BACK",words:["BONE","FIRE","PACK","YARD"]},
+   {level:2,label:"CARD GAMES",words:["BRIDGE","HEARTS","POKER","SPADES"]},
+   {level:3,label:"HIDDEN COLORS",words:["EMBRACE","GOLDENROD","PLATINUM","SCARECROW"]}
+ ]},
+ {id:14,date:"2023-10-24",categories:[
+   {level:0,label:"BAKED GOODS",words:["BROWNIE","COOKIE","MUFFIN","SCONE"]},
+   {level:1,label:"WORDS AFTER TOOTH",words:["ACHE","BRUSH","FAIRY","PASTE"]},
+   {level:2,label:"FICTIONAL DETECTIVES",words:["CLOUSEAU","COLOMBO","HOLMES","POIROT"]},
+   {level:3,label:"___ FLY",words:["BAR","BUTTER","FIRE","MAY"]}
+ ]},
+ {id:15,date:"2023-11-05",categories:[
+   {level:0,label:"THINGS WITH KEYS",words:["KEYBOARD","LOCKSMITH","PIANO","TYPEWRITER"]},
+   {level:1,label:"WORDS BEFORE LIGHT",words:["DAY","FLASH","MOON","SPOT"]},
+   {level:2,label:"DANCES",words:["FOXTROT","JIVE","POLKA","RUMBA"]},
+   {level:3,label:"FAMOUS TOMS",words:["CRUISE","HANKS","HARDY","JONES"]}
+ ]},
+ {id:16,date:"2023-11-18",categories:[
+   {level:0,label:"VEGETABLES",words:["BEET","CARROT","ONION","TURNIP"]},
+   {level:1,label:"___ WORK",words:["ART","BRAIN","FRAME","GROUND"]},
+   {level:2,label:"POKER TERMS",words:["BLUFF","CALL","FOLD","RAISE"]},
+   {level:3,label:"WORDS HIDDEN IN COUNTRIES",words:["CHILI","GERMANY","IRAN","SPAIN"]}
+ ]},
+ {id:17,date:"2023-12-01",categories:[
+   {level:0,label:"THINGS THAT SPARKLE",words:["DIAMOND","GLITTER","SEQUIN","STAR"]},
+   {level:1,label:"WORDS AFTER SNOW",words:["BALL","BOARD","FLAKE","MAN"]},
+   {level:2,label:"UNITS OF MEASUREMENT",words:["FOOT","METER","POUND","YARD"]},
+   {level:3,label:"___ BEAR",words:["GRIZZLY","KOALA","POLAR","TEDDY"]}
+ ]},
+ {id:18,date:"2023-12-15",categories:[
+   {level:0,label:"THINGS IN A GYM",words:["BENCH","MAT","RACK","WEIGHTS"]},
+   {level:1,label:"WORDS BEFORE WATER",words:["BACK","DEEP","FLOOD","RAIN"]},
+   {level:2,label:"FAMOUS PAIRS",words:["BONNIE","ROMEO","SALT","THUNDER"]},
+   {level:3,label:"___ HOUSE",words:["DOG","FULL","OPEN","WARE"]}
+ ]},

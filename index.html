@@ -373,3 +373,16 @@ function setToolbarEnabled(enabled){
    el.style.opacity=enabled?'1':'0.3'; el.style.pointerEvents=enabled?'auto':'none';
  });
 }
+// ── Game action (DOM to Phaser)
+function gameAction(action){
+ if(!phaserGame) return;
+ if(action==='quit'){ startGame(); return; }
+ const scene=phaserGame.scene.getScene('ClusterScene');
+ if(!scene) return;
+ switch(action){
+   case 'shuffle': scene.doShuffle(); break;
+   case 'clear':   scene.doClear();   break;
+   case 'submit':  scene.doSubmit();  break;
+   case 'clue':    scene.doClue();    break;
+ }
+}

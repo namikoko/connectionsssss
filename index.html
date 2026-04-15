@@ -457,4 +457,26 @@ create(){
      g.fillStyle(0x111111,1);
      g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
      g.fillStyle(cat.accent,1);
-
+g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0});
+     g.fillStyle(cat.accent,0.04);
+     g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
+     g.lineStyle(1,cat.accent,0.12);
+     g.strokeRoundedRect(x,y,rw,this.SOL_H,this.s(8));
+     const lbl=this.add.text(x+this.s(18),y+this.s(12),cat.label,{
+       fontFamily:'DM Mono',fontSize:this.s(9)+'px',color:cat.hex,letterSpacing:this.s(2)
+     });
+     const wds=this.add.text(x+this.s(18),y+this.s(30),cat.words.join('  \u00b7  '),{
+       fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'500',color:'#706d66'
+     });
+     // animate newest solved row sliding in
+     const isNewest = animate && row===this.solvedCats.length-1;
+     if(isNewest){
+       g.setAlpha(0); g.x=-this.s(40);
+       lbl.setAlpha(0); lbl.x-=this.s(40);
+       wds.setAlpha(0); wds.x-=this.s(40);
+       this.tweens.add({targets:g,x:0,alpha:1,duration:420,ease:'Back.easeOut',delay:50});
+       this.tweens.add({targets:lbl,x:lbl.x+this.s(40),alpha:1,duration:420,ease:'Back.easeOut',delay:100});
+       this.tweens.add({targets:wds,x:wds.x+this.s(40),alpha:1,duration:420,ease:'Back.easeOut',delay:150});
+     }
+   });
+ }

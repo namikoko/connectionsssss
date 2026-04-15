@@ -428,4 +428,33 @@ create(){
    updateSubmitBtn(false, 0);
    this.fullRedraw(true);
  }
+ s(n){ return Math.round(n*DPR); }
+ get PAD()     { return this.s(18); }
+ get GAP()     { return this.s(7);  }
+ get TILE_W()  { return Math.floor((W-this.PAD*2-this.GAP*3)/4); }
+ get TILE_H()  { return this.s(60); }
+ get SOL_H()   { return this.s(54); }
+ get GRID_TOP(){ return this.solvedCats.length*(this.SOL_H+this.GAP); }
+
+
+ tileKey(t){ return t.catIndex+'|'+t.word; }
+ activeTiles(){ return this.allTiles.filter(t=>!this.solvedCats.includes(t.catIndex)); }
+
+
+ fullRedraw(animate){
+   this.children.removeAll(true);
+   this.tileObjs=[];
+   this.drawSolvedRows(animate);
+   this.drawTiles(animate);
+ }
+
+
+ drawSolvedRows(animate){
+   this.solvedCats.forEach((ci,row)=>{
+     const cat=this.puzzleData.categories[ci];
+     const x=this.PAD, y=row*(this.SOL_H+this.GAP), rw=W-this.PAD*2;
+     const g=this.add.graphics();
+     g.fillStyle(0x111111,1);
+     g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
+     g.fillStyle(cat.accent,1);
 

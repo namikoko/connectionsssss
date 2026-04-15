@@ -339,3 +339,37 @@ function getRandomPuzzle(){
    }))
  };
 }
+// DOM helpers
+const $msg    = ()=>document.getElementById('msg-bar');
+const $submit = ()=>document.getElementById('btn-submit');
+let msgTimer  = null;
+
+
+function showMsg(text, color, duration){
+ const el=$msg(); if(!el) return;
+ el.textContent=text; el.style.color=color||'#444';
+ clearTimeout(msgTimer);
+ if(duration) msgTimer=setTimeout(()=>{ el.textContent=''; },duration);
+}
+function updateLives(mistakes, max){
+ for(let i=0;i<max;i++){
+   const p=document.getElementById('pip'+i);
+   if(p) p.className = i < mistakes ? 'life-pip spent' : 'life-pip';
+ }
+}
+function updateSubmitBtn(active, selCount){
+ const b=$submit(); if(!b) return;
+ if(active){ b.classList.add('accent'); } else { b.classList.remove('accent'); }
+ const counter=document.getElementById('sel-count');
+ if(counter) counter.textContent=(selCount||0)+'/4';
+}
+function setToolbarEnabled(enabled){
+ const ids=['btn-clue','btn-quit','btn-submit'];
+ ids.forEach(id=>{
+   const el=document.getElementById(id);
+   if(el){ el.style.opacity=enabled?'1':'0.3'; el.style.pointerEvents=enabled?'auto':'none'; }
+ });
+ document.querySelectorAll('#footer .tool-btn').forEach(el=>{
+   el.style.opacity=enabled?'1':'0.3'; el.style.pointerEvents=enabled?'auto':'none';
+ });
+}

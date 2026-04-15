@@ -9,11 +9,16 @@
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
   html,body{width:100%;min-height:100vh;background:#0e0e0e;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
-  #top-bar{width:100%;max-width:540px;padding:24px 20px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  #top-bar{width:100%;max-width:540px;padding:24px 20px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;}
   #top-bar h1{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#f0ede6;letter-spacing:5px;text-transform:uppercase;}
-  #top-bar p{font-family:'DM Mono',monospace;font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;}
-  #puzzle-meta{font-family:'DM Mono',monospace;font-size:9px;color:#2e2e2e;letter-spacing:2px;margin-top:2px;}
+  #top-bar p{font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;font-family:'DM Mono',monospace;}
   #divider{width:100%;max-width:540px;height:1px;background:linear-gradient(to right,transparent,#2a2a2a,transparent);margin-bottom:12px;}
+  #loading{font-family:'DM Mono',monospace;font-size:11px;color:#3a3a3a;letter-spacing:3px;text-transform:uppercase;margin-top:50px;text-align:center;line-height:2;}
+  #loading .dots span{animation:blink 1.2s infinite;}
+  #loading .dots span:nth-child(2){animation-delay:.2s;}
+  #loading .dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
+  #error-msg{display:none;font-family:'DM Mono',monospace;font-size:11px;color:#c0392b;letter-spacing:2px;text-align:center;margin-top:40px;line-height:2;}
   #game-wrapper{width:100%;max-width:540px;display:flex;justify-content:center;}
   #game-wrapper canvas{width:100%!important;height:auto!important;}
 </style>
@@ -22,203 +27,26 @@
 <div id="top-bar">
   <h1>Cluster</h1>
   <p>Group four words that belong together</p>
-  <div id="puzzle-meta"></div>
 </div>
 <div id="divider"></div>
+<div id="loading">
+  Generating puzzle<div class="dots"><span>.</span><span>.</span><span>.</span></div>
+</div>
+<div id="error-msg"></div>
 <div id="game-wrapper"></div>
 
 <script>
-// ── Embedded puzzles — no API needed ──────────────────────────────────────────
-const PUZZLES = [
-  {id:1,date:"2023-06-12",categories:[
-    {level:0,label:"FISH",words:["BASS","FLOUNDER","PIKE","TROUT"]},
-    {level:1,label:"FIRE ___",words:["ANT","DRILL","ISLAND","WORK"]},
-    {level:2,label:"STARTING WITH BODY PARTS",words:["ARMADILLO","ELBOW ROOM","KNEECAP","SHINDIG"]},
-    {level:3,label:"___ GAME",words:["BALL","BOARD","MIND","VIDEO"]}
-  ]},
-  {id:2,date:"2023-06-13",categories:[
-    {level:0,label:"SLENDER",words:["LEAN","SLIM","SLIGHT","THIN"]},
-    {level:1,label:"MICHAEL ___",words:["B. JORDAN","CERA","JACKSON","SCOTT"]},
-    {level:2,label:"BEGINS WITH A FRUIT",words:["APPLESAUCE","GRAPEVINE","LIMELIGHT","PEACHFUZZ"]},
-    {level:3,label:"PALINDROMES",words:["CIVIC","KAYAK","LEVEL","RACECAR"]}
-  ]},
-  {id:3,date:"2023-06-20",categories:[
-    {level:0,label:"THINGS THAT ARE ROUND",words:["BALL","GLOBE","HOOP","RING"]},
-    {level:1,label:"SYNONYMS FOR STEAL",words:["LIFT","NAB","PINCH","SWIPE"]},
-    {level:2,label:"___ BOARD",words:["CARD","CHALK","DART","SKATE"]},
-    {level:3,label:"TYPES OF HUMOR",words:["DRY","DARK","SLAPSTICK","WIT"]}
-  ]},
-  {id:4,date:"2023-07-05",categories:[
-    {level:0,label:"PLACES TO SIT",words:["BENCH","CHAIR","COUCH","STOOL"]},
-    {level:1,label:"WORDS AFTER BREAK",words:["AWAY","DOWN","OUT","THROUGH"]},
-    {level:2,label:"GREEK LETTERS",words:["ALPHA","BETA","DELTA","OMEGA"]},
-    {level:3,label:"___ LINE",words:["BOTTOM","FINISH","PUNCH","SIDE"]}
-  ]},
-  {id:5,date:"2023-07-12",categories:[
-    {level:0,label:"COFFEE DRINKS",words:["AMERICANO","CAPPUCCINO","ESPRESSO","LATTE"]},
-    {level:1,label:"WAYS TO COOK EGGS",words:["BOILED","FRIED","POACHED","SCRAMBLED"]},
-    {level:2,label:"___ STONE",words:["CORNER","KEY","LIME","MILE"]},
-    {level:3,label:"TV SHOW GENRES",words:["DRAMA","MYSTERY","REALITY","SITCOM"]}
-  ]},
-  {id:6,date:"2023-07-20",categories:[
-    {level:0,label:"PASTA SHAPES",words:["BOW TIE","PENNE","RIGATONI","SPAGHETTI"]},
-    {level:1,label:"WORDS BEFORE HOUSE",words:["BIRD","DOG","FIRE","GREEN"]},
-    {level:2,label:"FAMOUS JACKS",words:["BLACK","CRACKER","HAMMER","KNIFE"]},
-    {level:3,label:"DOUBLE LETTERS",words:["BALLOON","BROCCOLI","COFFEE","TOFFEE"]}
-  ]},
-  {id:7,date:"2023-08-01",categories:[
-    {level:0,label:"THINGS IN A WALLET",words:["CASH","CARD","ID","RECEIPT"]},
-    {level:1,label:"SHADES OF BLUE",words:["COBALT","NAVY","SKY","TEAL"]},
-    {level:2,label:"ROCK BANDS",words:["CREAM","KISS","QUEEN","RUSH"]},
-    {level:3,label:"___ POOL",words:["CAR","DEAD","GENE","WHIRL"]}
-  ]},
-  {id:8,date:"2023-08-10",categories:[
-    {level:0,label:"FOOTWEAR",words:["BOOT","LOAFER","SANDAL","SNEAKER"]},
-    {level:1,label:"WORDS AFTER SPEED",words:["BOAT","BUMP","DIAL","WAY"]},
-    {level:2,label:"TYPES OF DANCE",words:["SALSA","SWING","TANGO","WALTZ"]},
-    {level:3,label:"THINGS THAT SNAP",words:["FINGERS","JUDGEMENT","PEAS","TURTLE"]}
-  ]},
-  {id:9,date:"2023-08-22",categories:[
-    {level:0,label:"BABY ANIMALS",words:["CUB","FOAL","KIT","LAMB"]},
-    {level:1,label:"WORDS BEFORE TIME",words:["BED","DINNER","HALF","OVER"]},
-    {level:2,label:"ELEMENTS",words:["GOLD","IRON","LEAD","MERCURY"]},
-    {level:3,label:"___ JACK",words:["CRACKER","FLAP","LUMBER","YELLOW"]}
-  ]},
-  {id:10,date:"2023-09-03",categories:[
-    {level:0,label:"CITRUS FRUITS",words:["GRAPEFRUIT","LEMON","LIME","ORANGE"]},
-    {level:1,label:"WORDS AFTER HAND",words:["BAG","MADE","SHAKE","WRITING"]},
-    {level:2,label:"BOARD GAMES",words:["CHESS","CLUE","RISK","SORRY"]},
-    {level:3,label:"THINGS THAT ARE PITCHED",words:["BALL","IDEA","ROOF","TENT"]}
-  ]},
-  {id:11,date:"2023-09-15",categories:[
-    {level:0,label:"DOG BREEDS",words:["BOXER","HUSKY","POINTER","PUG"]},
-    {level:1,label:"WORDS AFTER FIRE",words:["CRACKER","FLY","PLACE","WORKS"]},
-    {level:2,label:"CURRENCY",words:["BUCK","GRAND","NOTE","QUARTER"]},
-    {level:3,label:"SILENT LETTERS",words:["KNIGHT","PSALM","TSUNAMI","WRIST"]}
-  ]},
-  {id:12,date:"2023-09-28",categories:[
-    {level:0,label:"THINGS THAT DRIP",words:["CANDLE","FAUCET","ICICLE","NOSE"]},
-    {level:1,label:"WORDS BEFORE BALL",words:["BASE","BASKET","FIRE","SNOW"]},
-    {level:2,label:"FAMOUS GEORGES",words:["CLOONEY","LUCAS","STRAIT","WASHINGTON"]},
-    {level:3,label:"___ RING",words:["BOXING","EAR","ONION","SPRING"]}
-  ]},
-  {id:13,date:"2023-10-10",categories:[
-    {level:0,label:"WEATHER",words:["HAIL","RAIN","SLEET","SNOW"]},
-    {level:1,label:"WORDS AFTER BACK",words:["BONE","FIRE","PACK","YARD"]},
-    {level:2,label:"CARD GAMES",words:["BRIDGE","HEARTS","POKER","SPADES"]},
-    {level:3,label:"HIDDEN COLORS",words:["EMBRACE","GOLDENROD","PLATINUM","SCARECROW"]}
-  ]},
-  {id:14,date:"2023-10-24",categories:[
-    {level:0,label:"BAKED GOODS",words:["BROWNIE","COOKIE","MUFFIN","SCONE"]},
-    {level:1,label:"WORDS AFTER TOOTH",words:["ACHE","BRUSH","FAIRY","PASTE"]},
-    {level:2,label:"FICTIONAL DETECTIVES",words:["CLOUSEAU","COLOMBO","HOLMES","POIROT"]},
-    {level:3,label:"___ FLY",words:["BAR","BUTTER","FIRE","MAY"]}
-  ]},
-  {id:15,date:"2023-11-05",categories:[
-    {level:0,label:"THINGS WITH KEYS",words:["KEYBOARD","LOCKSMITH","PIANO","TYPEWRITER"]},
-    {level:1,label:"WORDS BEFORE LIGHT",words:["DAY","FLASH","MOON","SPOT"]},
-    {level:2,label:"DANCES",words:["FOXTROT","JIVE","POLKA","RUMBA"]},
-    {level:3,label:"FAMOUS TOMS",words:["CRUISE","HANKS","HARDY","JONES"]}
-  ]},
-  {id:16,date:"2023-11-18",categories:[
-    {level:0,label:"VEGETABLES",words:["BEET","CARROT","ONION","TURNIP"]},
-    {level:1,label:"___ WORK",words:["ART","BRAIN","FRAME","GROUND"]},
-    {level:2,label:"POKER TERMS",words:["BLUFF","CALL","FOLD","RAISE"]},
-    {level:3,label:"WORDS HIDDEN IN COUNTRIES",words:["CHILI","GERMANY","IRAN","SPAIN"]}
-  ]},
-  {id:17,date:"2023-12-01",categories:[
-    {level:0,label:"THINGS THAT SPARKLE",words:["DIAMOND","GLITTER","SEQUIN","STAR"]},
-    {level:1,label:"WORDS AFTER SNOW",words:["BALL","BOARD","FLAKE","MAN"]},
-    {level:2,label:"UNITS OF MEASUREMENT",words:["FOOT","METER","POUND","YARD"]},
-    {level:3,label:"___ BEAR",words:["GRIZZLY","KOALA","POLAR","TEDDY"]}
-  ]},
-  {id:18,date:"2023-12-15",categories:[
-    {level:0,label:"THINGS IN A GYM",words:["BENCH","MAT","RACK","WEIGHTS"]},
-    {level:1,label:"WORDS BEFORE WATER",words:["BACK","DEEP","FLOOD","RAIN"]},
-    {level:2,label:"FAMOUS PAIRS",words:["BONNIE","ROMEO","SALT","THUNDER"]},
-    {level:3,label:"___ HOUSE",words:["DOG","FULL","OPEN","WARE"]}
-  ]},
-  {id:19,date:"2024-01-05",categories:[
-    {level:0,label:"PARTS OF A BOOK",words:["CHAPTER","COVER","PAGE","SPINE"]},
-    {level:1,label:"WORDS AFTER WATER",words:["COLOR","FALL","MARK","PROOF"]},
-    {level:2,label:"CHESS PIECES",words:["BISHOP","KING","KNIGHT","ROOK"]},
-    {level:3,label:"___ PLANT",words:["EGG","HOUSE","POWER","RUBBER"]}
-  ]},
-  {id:20,date:"2024-01-18",categories:[
-    {level:0,label:"FRUITS",words:["APPLE","CHERRY","GRAPE","PEACH"]},
-    {level:1,label:"WORDS AFTER MOON",words:["BEAM","LIGHT","SHINE","WALK"]},
-    {level:2,label:"MAGIC WORDS",words:["ABRACADABRA","HOCUS","PRESTO","SHAZAM"]},
-    {level:3,label:"___ CAKE",words:["CUP","CHEESE","PAN","SHORT"]}
-  ]},
-  {id:21,date:"2024-02-01",categories:[
-    {level:0,label:"THINGS THAT BUZZ",words:["ALARM","BEE","PHONE","RAZOR"]},
-    {level:1,label:"WORDS BEFORE ROOM",words:["BALL","BED","CLASS","SHOW"]},
-    {level:2,label:"FAMOUS WILLIAMS",words:["PRINCE","ROBIN","SERENA","SHAKESPEARE"]},
-    {level:3,label:"DOUBLE MEANING",words:["BAT","CRANE","MOLE","SEAL"]}
-  ]},
-  {id:22,date:"2024-02-14",categories:[
-    {level:0,label:"THINGS THAT ARE RED",words:["CHERRY","FIRE TRUCK","ROSE","STOP SIGN"]},
-    {level:1,label:"WORDS AFTER HEART",words:["BEAT","BREAK","BURN","FELT"]},
-    {level:2,label:"LOVE SONGS",words:["ALWAYS","DEVOTED","ENDLESS","FOREVER"]},
-    {level:3,label:"___ ARROW",words:["BOW","CUPID","NARROW","STRAIGHT"]}
-  ]},
-  {id:23,date:"2024-03-01",categories:[
-    {level:0,label:"TREES",words:["BIRCH","ELM","MAPLE","OAK"]},
-    {level:1,label:"WORDS BEFORE FALL",words:["DOWN","FREE","NIGHT","RAIN"]},
-    {level:2,label:"SHAKESPEARE PLAYS",words:["HAMLET","MACBETH","OTHELLO","TEMPEST"]},
-    {level:3,label:"___ WOOD",words:["COTTON","DRIFT","HOLLY","PLY"]}
-  ]},
-  {id:24,date:"2024-03-15",categories:[
-    {level:0,label:"BREAKFAST ITEMS",words:["BACON","CEREAL","PANCAKE","WAFFLE"]},
-    {level:1,label:"WORDS AFTER BOOK",words:["CASE","END","MARK","WORM"]},
-    {level:2,label:"SPACE TERMS",words:["COMET","NEBULA","ORBIT","QUASAR"]},
-    {level:3,label:"___ FISH",words:["CAT","JELLY","STAR","SWORD"]}
-  ]},
-  {id:25,date:"2024-04-01",categories:[
-    {level:0,label:"THINGS THAT FLOAT",words:["BOAT","BUBBLE","CORK","DUCK"]},
-    {level:1,label:"WORDS BEFORE DREAM",words:["DAY","LUCID","PIPE","WET"]},
-    {level:2,label:"INSTRUMENTS",words:["BASS","CELLO","HARP","VIOLA"]},
-    {level:3,label:"APRIL FOOL",words:["GAG","HOAX","PRANK","TRICK"]}
-  ]},
-  {id:26,date:"2024-04-15",categories:[
-    {level:0,label:"FLOWERS",words:["DAISY","LILY","ROSE","TULIP"]},
-    {level:1,label:"WORDS AFTER SUN",words:["BURN","FLOWER","RISE","SET"]},
-    {level:2,label:"FAMOUS PAINTINGS",words:["GUERNICA","MONA LISA","STARRY NIGHT","THE SCREAM"]},
-    {level:3,label:"___ SHOT",words:["BIG","BUCK","LONG","MOON"]}
-  ]},
-  {id:27,date:"2024-05-01",categories:[
-    {level:0,label:"THINGS IN A PARK",words:["BENCH","FOUNTAIN","PATH","TREE"]},
-    {level:1,label:"WORDS BEFORE WORK",words:["CLOCK","FIRE","HOME","NET"]},
-    {level:2,label:"MYTHOLOGICAL CREATURES",words:["DRAGON","GRIFFIN","PHOENIX","UNICORN"]},
-    {level:3,label:"___ POINT",words:["BALL","CHECK","GUN","STAND"]}
-  ]},
-  {id:28,date:"2024-05-15",categories:[
-    {level:0,label:"THINGS THAT TICK",words:["BOMB","CLOCK","HEART","METRONOME"]},
-    {level:1,label:"WORDS AFTER GOLD",words:["DIGGER","FISH","MINE","RUSH"]},
-    {level:2,label:"FAMOUS BRIDGES",words:["BROOKLYN","GOLDEN GATE","LONDON","TOWER"]},
-    {level:3,label:"___ CALL",words:["BIRD","CURTAIN","LAST","ROLL"]}
-  ]},
-  {id:29,date:"2024-06-01",categories:[
-    {level:0,label:"BEACH ITEMS",words:["TOWEL","UMBRELLA","SAND","SHELL"]},
-    {level:1,label:"WORDS BEFORE WAVE",words:["COLD","HEAT","MICRO","SHOCK"]},
-    {level:2,label:"OCEAN CREATURES",words:["DOLPHIN","OCTOPUS","SEAHORSE","WHALE"]},
-    {level:3,label:"___ BOARD",words:["CARD","OVER","SKATE","SURF"]}
-  ]},
-  {id:30,date:"2024-06-15",categories:[
-    {level:0,label:"THINGS WITH STRINGS",words:["BOW","GUITAR","KITE","PUPPET"]},
-    {level:1,label:"WORDS AFTER RAIN",words:["BOW","COAT","DROP","STORM"]},
-    {level:2,label:"FAMOUS CITIES",words:["PARIS","ROME","TOKYO","VIENNA"]},
-    {level:3,label:"___ BONE",words:["BACK","JAW","TROM","WISH"]}
-  ]}
+//  Config
+  {accent:0xe8c547,hex:'#e8c547'},
+  {accent:0x6dbf8a,hex:'#6dbf8a'},
+  {accent:0x6aaed6,hex:'#6aaed6'},
+  {accent:0xb07fd4,hex:'#b07fd4'}
 ];
 
-// ── Colour map ────────────────────────────────────────────────────────────────
-const LEVEL_COLORS = [
-  { accent:0xe8c547, hex:'#e8c547' },
-  { accent:0x6dbf8a, hex:'#6dbf8a' },
-  { accent:0x6aaed6, hex:'#6aaed6' },
-  { accent:0xb07fd4, hex:'#b07fd4' }
-];
+const DPR=Math.min(window.devicePixelRatio||1,2);
+const LOGICAL_W=Math.min(500,window.innerWidth-8);
+const W=Math.round(LOGICAL_W*DPR);
+const H=Math.round(620*DPR);
 
 function shuffle(arr){
   const a=[...arr];
@@ -226,259 +54,173 @@ function shuffle(arr){
   return a;
 }
 
-function getRandomPuzzle(){
-  const raw = PUZZLES[Math.floor(Math.random()*PUZZLES.length)];
+//  AI puzzle generation 
+const THEMES = [
+  'science and nature', 'pop culture and movies', 'food and cooking',
+  'sports and athletes', 'music and bands', 'history and geography',
+  'technology and computing', 'art and literature', 'animals and biology',
+  'idioms and expressions'
+];
+
+async function generatePuzzle() {
+  const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+
+  const prompt = `You are the puzzle editor for NYT Connections. Create one Connections puzzle on the theme: "${theme}".
+
+Rules:
+- 4 categories, each with exactly 4 words
+- YELLOW (easiest): straightforward grouping, obvious connection
+- GREEN (medium): requires some thought
+- BLUE (hard): tricky, involves wordplay or double meanings
+- PURPLE (hardest): very tricky, misleading — words seem to belong elsewhere but share a hidden link (e.g. "words that follow FIRE", "__ + STONE", homophones of something, etc.)
+
+Important:
+- Words must be 1-2 words max, ALL CAPS
+- Make the purple category genuinely deceptive — the words should LOOK like they belong to other categories
+- Do NOT make categories that are too obvious like "TYPES OF PASTA" or "COLORS"
+- Aim for NYT difficulty — something that would make people think hard
+
+Respond ONLY with valid JSON, no explanation, no markdown:
+{
+  "categories": [
+    {"level": 0, "label": "YELLOW LABEL", "words": ["W1","W2","W3","W4"]},
+    {"level": 1, "label": "GREEN LABEL",  "words": ["W1","W2","W3","W4"]},
+    {"level": 2, "label": "BLUE LABEL",   "words": ["W1","W2","W3","W4"]},
+    {"level": 3, "label": "PURPLE LABEL", "words": ["W1","W2","W3","W4"]}
+  ]
+}`;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  const data = await res.json();
+  const text = data.content.find(b => b.type === 'text')?.text || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+
+ // Attach accent colours
   return {
-    date: raw.date,
-    id: raw.id,
-    categories: raw.categories.map((c,i) => ({
-      ...LEVEL_COLORS[c.level],
-      level: c.level,
-      label: c.label,
-      words: c.words.map(w=>w.toUpperCase())
-    }))
+    categories: parsed.categories.map(cat => ({
+      ...cat,
+      label: cat.label.toUpperCase(),
+      words: cat.words.map(w => w.toUpperCase()),
+      ...ACCENTS[cat.level]
+    })),
+    theme
   };
 }
-
-// ── Phaser ────────────────────────────────────────────────────────────────────
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
-const W   = Math.round(Math.min(500, window.innerWidth - 8) * DPR);
-const H   = Math.round(620 * DPR);
-let phaserGame = null;
-
+//  Phaser Scene
 class ClusterScene extends Phaser.Scene {
-  constructor(){ super({ key:'ClusterScene' }); }
-  init(data){ this.puzzleData = data.puzzle; }
+  constructor(){super({key:'ClusterScene'});}
+  init(data){this.puzzleData=data.puzzle;}
 
   create(){
-    this.allTiles   = shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
-    this.selected   = new Set();
-    this.solvedCats = [];
-    this.mistakes   = 0;
-    this.maxMistakes= 4;
-    this.gameOver   = false;
-    this.animLock   = false;
-    this.tileObjs   = [];
-    this.msgText    = null;
-    this._msgTimer  = null;
-    this.submitRef  = null;
+    this.W=W; this.H=H;
+    this.allTiles=shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
+    this.selected=new Set();
+    this.solvedCats=[];
+    this.mistakes=0;
+    this.maxMistakes=4;
+    this.gameOver=false;
+    this.animLock=false;
+    this.tileObjs=[];
+    this.msgText=null;
+    this._msgTimer=null;
+    this.submitRef=null;
     this.fullRedraw();
   }
 
-  s(n){ return Math.round(n * DPR); }
-  get PAD()     { return this.s(16); }
-  get GAP()     { return this.s(8);  }
-  get TILE_W()  { return Math.floor((W - this.PAD*2 - this.GAP*3) / 4); }
-  get TILE_H()  { return this.s(64); }
-  get SOL_H()   { return this.s(52); }
-  get GRID_TOP(){ return this.solvedCats.length * (this.SOL_H + this.GAP); }
+  s(n){return Math.round(n*DPR);}
+  get PAD(){return this.s(16);}
+  get GAP(){return this.s(8);}
+  get COLS(){return 4;}
+  get TILE_W(){return Math.floor((W-this.PAD*2-this.GAP*3)/4);}
+  get TILE_H(){return this.s(64);}
+  get SOL_H(){return this.s(52);}
+  get GRID_TOP(){return this.solvedCats.length*(this.SOL_H+this.GAP);}
 
-  tileKey(t)   { return t.catIndex + '|' + t.word; }
-  activeTiles(){ return this.allTiles.filter(t => !this.solvedCats.includes(t.catIndex)); }
+  tileKey(t){return t.catIndex+'|'+t.word;}
+  activeTiles(){return this.allTiles.filter(t=>!this.solvedCats.includes(t.catIndex));}
 
   fullRedraw(){
     this.children.removeAll(true);
-    this.tileObjs = [];
+    this.tileObjs=[];
     this.drawSolvedRows();
     this.drawTiles();
     this.drawBottomUI();
   }
 
   drawSolvedRows(){
-    this.solvedCats.forEach((ci, row) => {
-      const cat = this.puzzleData.categories[ci];
-      const x=this.PAD, y=row*(this.SOL_H+this.GAP), rw=W-this.PAD*2;
-      const g = this.add.graphics();
-      g.fillStyle(0x1c1c1c,1); g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(6));
-      g.fillStyle(cat.accent,1); g.fillRect(x,y,this.s(3),this.SOL_H);
-      g.fillStyle(cat.accent,0.07); g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(6));
-      this.add.text(x+this.s(16), y+this.s(10), cat.label,
-        {fontFamily:'DM Mono',fontSize:`${this.s(9)}px`,color:cat.hex,letterSpacing:this.s(2)});
-      this.add.text(x+this.s(16), y+this.s(27), cat.words.join('  ·  '),
-        {fontFamily:'DM Mono',fontSize:`${this.s(12)}px`,fontStyle:'bold',color:'#d0cdc6'});
+    this.solvedCats.forEach((ci,row)=>{
+      const cat=this.puzzleData.categories[ci];
+      const x=this.PAD,y=row*(this.SOL_H+this.GAP),w=W-this.PAD*2;
+      const g=this.add.graphics();
+      g.fillStyle(0x1c1c1c,1);g.fillRoundedRect(x,y,w,this.SOL_H,this.s(6));
+      g.fillStyle(cat.accent,1);g.fillRect(x,y,this.s(3),this.SOL_H);
+      g.fillStyle(cat.accent,0.07);g.fillRoundedRect(x,y,w,this.SOL_H,this.s(6));
+      this.add.text(x+this.s(16),y+this.s(10),cat.label,{fontFamily:'DM Mono',fontSize:`${this.s(9)}px`,color:cat.hex,letterSpacing:this.s(2)});
+      this.add.text(x+this.s(16),y+this.s(27),cat.words.join('  ·  '),{fontFamily:'DM Mono',fontSize:`${this.s(12)}px`,fontStyle:'bold',color:'#d0cdc6'});
     });
   }
 
   drawTiles(){
-    this.activeTiles().forEach((tile, i) => {
-      const col=i%4, row=Math.floor(i/4);
-      const x = this.PAD + col*(this.TILE_W+this.GAP);
-      const y = this.GRID_TOP + row*(this.TILE_H+this.GAP);
-      const sel = this.selected.has(this.tileKey(tile));
-      const g = this.add.graphics();
+    this.activeTiles().forEach((tile,i)=>{
+      const col=i%this.COLS,row=Math.floor(i/this.COLS);
+      const x=this.PAD+col*(this.TILE_W+this.GAP);
+      const y=this.GRID_TOP+row*(this.TILE_H+this.GAP);
+      const sel=this.selected.has(this.tileKey(tile));
+      const g=this.add.graphics();
       this.paintTile(g,x,y,sel,false);
-      const txt = this.add.text(x+this.TILE_W/2, y+this.TILE_H/2, tile.word, {
-        fontFamily:'DM Mono', fontSize:`${this.s(11)}px`, fontStyle:'bold',
-        color: sel?'#0e0e0e':'#b0ada6', align:'center', wordWrap:{width:this.TILE_W-this.s(12)}
+      const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
+        fontFamily:'DM Mono',fontSize:`${this.s(11)}px`,fontStyle:'bold',
+        color:sel?'#0e0e0e':'#b0ada6',align:'center',wordWrap:{width:this.TILE_W-this.s(12)}
       }).setOrigin(0.5,0.5);
-      const zone = this.add.zone(x,y,this.TILE_W,this.TILE_H).setOrigin(0,0).setInteractive({cursor:'pointer'});
-      zone.on('pointerover',()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,true); });
-      zone.on('pointerout', ()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,false); });
+      const zone=this.add.zone(x,y,this.TILE_W,this.TILE_H).setOrigin(0,0).setInteractive({cursor:'pointer'});
+      zone.on('pointerover',()=>{if(!this.selected.has(this.tileKey(tile)))this.paintTile(g,x,y,false,true);});
+      zone.on('pointerout', ()=>{if(!this.selected.has(this.tileKey(tile)))this.paintTile(g,x,y,false,false);});
       zone.on('pointerup',  ()=>this.onTileClick(tile,g,txt,x,y));
       this.tileObjs.push({tile,g,txt,zone,x,y});
     });
   }
 
   paintTile(g,x,y,sel,hover){
-    g.clear(); const r=this.s(7);
-    if(sel)       { g.fillStyle(0xcfc4a2,1); g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r); }
-    else if(hover){ g.fillStyle(0x212121,1); g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r); g.lineStyle(this.s(1),0x3c3c3c,1); g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r); }
-    else          { g.fillStyle(0x181818,1); g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r); g.lineStyle(this.s(1),0x272727,1); g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r); }
-  }
-
-  drawBottomUI(){
-    const rows  = Math.ceil(this.activeTiles().length/4) || 0;
-    const baseY = this.GRID_TOP + rows*(this.TILE_H+this.GAP) + this.s(14);
-    this.msgText = this.add.text(W/2, baseY, '', {
-      fontFamily:'DM Mono', fontSize:`${this.s(11)}px`, color:'#888', letterSpacing:this.s(2)
-    }).setOrigin(0.5,0);
-
-    const dotsY = baseY + this.s(36);
-    this.add.text(this.PAD, dotsY+this.s(5), 'LIVES', {
-      fontFamily:'DM Mono', fontSize:`${this.s(8)}px`, color:'#333', letterSpacing:this.s(2)
-    }).setOrigin(0,0.5);
+    g.clear();
+    const r=this.s(7);
+    if(sel){g.fillStyle(0xcfc4a2,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
+    else if(hover){g.fillStyle(0x212121,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);g.lineStyle(this.s(1),0x3c3c3c,1);g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
+    else{g.fillStyle(0x181818,1);g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);g.lineStyle(this.s(1),0x272727,1);g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);}
+  } 
+    drawBottomUI(){
+    const rows=Math.ceil(this.activeTiles().length/this.COLS)||0;
+    const baseY=this.GRID_TOP+rows*(this.TILE_H+this.GAP)+this.s(14);
+    this.msgText=this.add.text(W/2,baseY,'',{fontFamily:'DM Mono',fontSize:`${this.s(11)}px`,color:'#888',letterSpacing:this.s(2)}).setOrigin(0.5,0);
+    const dotsY=baseY+this.s(36);
+    this.add.text(this.PAD,dotsY+this.s(5),'LIVES',{fontFamily:'DM Mono',fontSize:`${this.s(8)}px`,color:'#333',letterSpacing:this.s(2)}).setOrigin(0,0.5);
     for(let i=0;i<this.maxMistakes;i++){
       const g=this.add.graphics();
+      const cx=W/2-this.s(30)+i*this.s(20);
       g.fillStyle(i<this.mistakes?0x252525:0xcfc4a2,1);
-      g.fillCircle(W/2-this.s(30)+i*this.s(20), dotsY, this.s(5));
+      g.fillCircle(cx,dotsY,this.s(5));
     }
-
-    const btnY = dotsY + this.s(44);
-    this.makeBtn(W/2-this.s(116), btnY, this.s(96), this.s(34), 'SHUFFLE', ()=>this.doShuffle());
-    this.makeBtn(W/2,             btnY, this.s(96), this.s(34), 'CLEAR',   ()=>this.doClear());
-    this.submitRef = this.makeBtn(W/2+this.s(116), btnY, this.s(96), this.s(34), 'SUBMIT', ()=>this.doSubmit(), true);
+    const btnY=dotsY+this.s(44);
+    this.makeBtn(W/2-this.s(116),btnY,this.s(96),this.s(34),'SHUFFLE',()=>this.doShuffle());
+    this.makeBtn(W/2,            btnY,this.s(96),this.s(34),'CLEAR',  ()=>this.doClear());
+    this.submitRef=this.makeBtn(W/2+this.s(116),btnY,this.s(96),this.s(34),'SUBMIT',()=>this.doSubmit(),true);
     this.refreshSubmit();
   }
 
   makeBtn(cx,cy,w,h,label,cb,isSubmit=false){
-    const x=cx-w/2, r=h/2;
+    const x=cx-w/2,r=h/2;
     const g=this.add.graphics();
     const lbl=this.add.text(cx,cy,label,{fontFamily:'DM Mono',fontSize:`${this.s(10)}px`,fontStyle:'bold',color:'#3a3a3a',letterSpacing:this.s(2)}).setOrigin(0.5,0.5);
     const draw=(state)=>{
       g.clear();
-      if(state==='active')     { g.fillStyle(0xcfc4a2,1); g.fillRoundedRect(x,cy-h/2,w,h,r); lbl.setColor('#0e0e0e'); }
-      else if(state==='hover') { g.lineStyle(this.s(1),0x484848,1); g.strokeRoundedRect(x,cy-h/2,w,h,r); lbl.setColor('#888'); }
-      else                     { g.lineStyle(this.s(1),0x282828,1); g.strokeRoundedRect(x,cy-h/2,w,h,r); lbl.setColor('#3a3a3a'); }
-    };
-    draw('normal');
-    const zone=this.add.zone(x,cy-h/2,w,h).setOrigin(0,0).setInteractive({cursor:'pointer'});
-    zone.on('pointerover',()=>{ if(isSubmit&&this.selected.size!==4) return; draw('hover'); });
-    zone.on('pointerout', ()=>{ if(isSubmit&&this.selected.size===4){ draw('active'); return; } draw('normal'); });
-    zone.on('pointerup',  ()=>{ if(!this.gameOver&&!this.animLock) cb(); });
-    return {g,lbl,draw};
-  }
-
-  refreshSubmit(){ if(this.submitRef) this.submitRef.draw(this.selected.size===4?'active':'normal'); }
-
-  onTileClick(tile,g,txt,x,y){
-    if(this.gameOver||this.animLock) return;
-    const key=this.tileKey(tile);
-    if(this.selected.has(key)){
-      this.selected.delete(key); this.paintTile(g,x,y,false,false); txt.setColor('#b0ada6');
-    } else {
-      if(this.selected.size>=4) return;
-      this.selected.add(key); this.paintTile(g,x,y,true,false); txt.setColor('#0e0e0e');
-      this.tweens.add({targets:txt,scaleX:1.08,scaleY:1.08,duration:70,yoyo:true});
-    }
-    this.refreshSubmit();
-  }
-
-  doShuffle(){
-    const active=this.activeTiles(), sh=shuffle(active); let si=0;
-    this.allTiles=this.allTiles.map(t=>this.solvedCats.includes(t.catIndex)?t:sh[si++]);
-    this.selected.clear(); this.fullRedraw();
-  }
-
-  doClear(){
-    this.selected.clear();
-    this.tileObjs.forEach(o=>{ this.paintTile(o.g,o.x,o.y,false,false); o.txt.setColor('#b0ada6'); });
-    this.refreshSubmit();
-  }
-
-  doSubmit(){
-    if(this.selected.size!==4||this.animLock||this.gameOver) return;
-    const selObjs=this.tileObjs.filter(o=>this.selected.has(this.tileKey(o.tile)));
-    const cats=selObjs.map(o=>o.tile.catIndex);
-    const allSame=cats.every(c=>c===cats[0]);
-
-    if(allSame){
-      this.animLock=true; const ci=cats[0]; let done=0;
-      selObjs.forEach((o,i)=>{
-        this.tweens.add({targets:[o.txt],y:o.y+this.TILE_H/2-this.s(8),duration:90,delay:i*55,yoyo:true,ease:'Sine.easeOut',
-          onComplete:()=>{ done++; if(done===selObjs.length){
-            this.time.delayedCall(100,()=>{
-              this.solvedCats.push(ci); this.selected.clear(); this.animLock=false; this.fullRedraw();
-              const msgs=['NICE!','CORRECT!','BRILLIANT!','NAILED IT!','STELLAR!'];
-              this.showMsg(msgs[Math.floor(Math.random()*msgs.length)],'#6dbf8a',1600);
-              if(this.solvedCats.length===4) this.time.delayedCall(900,()=>this.endGame(true));
-            });
-          }}
-        });
-      });
-    } else {
-      this.mistakes++;
-      const freq={}; cats.forEach(c=>freq[c]=(freq[c]||0)+1);
-      const oneAway=Object.values(freq).some(v=>v===3);
-      this.showMsg(oneAway?'ONE AWAY...':'NOT QUITE','#e8c547',1800);
-      selObjs.forEach(o=>{
-        const ox=o.x; let tick=0;
-        this.time.addEvent({delay:38,repeat:9,callback:()=>{
-          tick++; const off=tick%2===0?this.s(7):-this.s(7);
-          o.g.x=off; o.txt.x=ox+this.TILE_W/2+off;
-        }});
-        this.time.delayedCall(400,()=>{ o.g.x=0; o.txt.x=ox+this.TILE_W/2; });
-      });
-      this.time.delayedCall(520,()=>{
-        this.selected.clear(); this.fullRedraw();
-        if(this.mistakes>=this.maxMistakes) this.time.delayedCall(300,()=>this.endGame(false));
-      });
-    }
-  }
-
-  showMsg(text,color,duration){
-    if(!this.msgText||!this.msgText.active) return;
-    this.msgText.setText(text).setColor(color||'#888');
-    if(this._msgTimer) this._msgTimer.remove();
-    if(duration) this._msgTimer=this.time.delayedCall(duration,()=>{ if(this.msgText&&this.msgText.active) this.msgText.setText(''); });
-  }
-
-  endGame(win){
-    this.gameOver=true;
-    if(!win){
-      this.puzzleData.categories.forEach((_,ci)=>{ if(!this.solvedCats.includes(ci)) this.solvedCats.push(ci); });
-      this.allTiles=[]; this.selected.clear(); this.fullRedraw();
-      this.showMsg('BETTER LUCK NEXT TIME','#555',0);
-    } else {
-      this.showMsg('YOU GOT THEM ALL!','#6dbf8a',0);
-    }
-    const cy=this.solvedCats.length*(this.SOL_H+this.GAP)+this.s(42);
-    const bw=this.s(150),bh=this.s(38);
-    const g=this.add.graphics();
-    g.fillStyle(0xcfc4a2,1); g.fillRoundedRect(W/2-bw/2,cy-bh/2,bw,bh,bh/2);
-    this.add.text(W/2,cy,'NEW PUZZLE',{fontFamily:'DM Mono',fontSize:`${this.s(11)}px`,fontStyle:'bold',color:'#0e0e0e',letterSpacing:this.s(2)}).setOrigin(0.5,0.5);
-    const zone=this.add.zone(W/2-bw/2,cy-bh/2,bw,bh).setOrigin(0,0).setInteractive({cursor:'pointer'});
-    zone.on('pointerup',()=>startGame());
-  }
-}
-
-// ── Bootstrap ─────────────────────────────────────────────────────────────────
-function startGame(){
-  const puzzle = getRandomPuzzle();
-  document.getElementById('puzzle-meta').textContent = `PUZZLE #${puzzle.id}  ·  ${puzzle.date}`;
-  if(phaserGame){
-    phaserGame.scene.getScene('ClusterScene').scene.restart({puzzle});
-  } else {
-    phaserGame = new Phaser.Game({
-      type:Phaser.AUTO, width:W, height:H, backgroundColor:'#0e0e0e',
-      parent:document.getElementById('game-wrapper'),
-      scene:[ClusterScene], resolution:DPR,
-      scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.CENTER_HORIZONTALLY,zoom:1/DPR}
-    });
-    setTimeout(()=>phaserGame.scene.start('ClusterScene',{puzzle}),150);
-  }
-}
-
-startGame();
-</script>
-</body>
-</html>
+        if(state==='disabled'){g.fillStyle(0x2a2a2a,1);g.fillRoundedRect(x,cy-h/2,w,h,r);}
+        else if(state==='hover'){g.fillStyle(0x3c3c3c,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}
+        else{g.fillStyle(0x333333,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}

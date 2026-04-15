@@ -480,3 +480,17 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      }
    });
  }
+ drawTiles(animate){
+   const active=this.activeTiles();
+   active.forEach((tile,i)=>{
+     const col=i%4, row=Math.floor(i/4);
+     const x=this.PAD+col*(this.TILE_W+this.GAP);
+     const y=this.GRID_TOP+row*(this.TILE_H+this.GAP);
+     const sel=this.selected.has(this.tileKey(tile));
+     const g=this.add.graphics();
+     this.paintTile(g,x,y,sel,false);
+     const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
+       fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',
+       color:sel?'#0a0a0a':'#8a877f',align:'center',
+       wordWrap:{width:this.TILE_W-this.s(14)}
+     }).setOrigin(0.5,0.5);

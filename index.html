@@ -387,8 +387,8 @@ function gameAction(action){
  }
 }
 //  Phaser game config
-const DPR = Math.min(window.devicePixelRatio||5, 5);
-const W   = Math.round(Math.min(500, window.innerWidth-18)*DPR);
+const DPR = Math.min(window.devicePixelRatio||1, 2);
+const W   = Math.round(Math.min(490, window.innerWidth-16)*DPR);
 const H   = Math.round(310*DPR);
 let phaserGame = null;
 class ClusterScene extends Phaser.Scene {

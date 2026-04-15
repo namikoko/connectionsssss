@@ -494,50 +494,34 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
        color:sel?'#0a0a0a':'#8a877f',align:'center',
        wordWrap:{width:this.TILE_W-this.s(14)}
      }).setOrigin(0.5,0.5);
-     if(animate){
-       const delay=i*35;
-       g.setAlpha(0); g.y=this.s(18);
-       txt.setAlpha(0); txt.y+=this.s(18);
-       this.tweens.add({targets:g,y:0,alpha:1,duration:320,ease:'Back.easeOut',delay});
-       this.tweens.add({targets:txt,y:txt.y-this.s(18),alpha:1,duration:320,ease:'Back.easeOut',delay});
-     }
+this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
+   } else {
+     if(this.selected.size>=4) return;
+     this.selected.add(key);
+     this.paintTile(g,x,y,true,false);
+     txt.setColor('#0a0a0a');
+     // select spring bounce
+     this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
+   }
+   updateSubmitBtn(this.selected.size===4, this.selected.size);
+ }
 
 
-     const zone=this.add.zone(x,y,this.TILE_W,this.TILE_H).setOrigin(0,0).setInteractive({cursor:'pointer'});
-     zone.on('pointerover',()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,true); });
-     zone.on('pointerout', ()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,false); });
-     zone.on('pointerup',  ()=>this.onTileClick(tile,g,txt,x,y));
-     this.tileObjs.push({tile,g,txt,zone,x,y});
+ doShuffle(){
+   if(this.gameOver||this.animLock) return;
+   this.animLock=true;
+   // scatter tiles out
+   this.tileObjs.forEach((o,i)=>{
+     const dx=(Math.random()-0.5)*this.s(60);
+     const dy=(Math.random()-0.5)*this.s(30);
+     this.tweens.add({targets:[o.g,o.txt],alpha:0,x:'+='+dx,y:'+='+dy,duration:200,ease:'Sine.easeIn',delay:i*15});
+   });
+   this.time.delayedCall(280,()=>{
+     const active=this.activeTiles(), sh=shuffle(active); let si=0;
+     this.allTiles=this.allTiles.map(t=>this.solvedCats.includes(t.catIndex)?t:sh[si++]);
+     this.selected.clear();
+     updateSubmitBtn(false, 0);
+     this.fullRedraw(true);
+     this.animLock=false;
    });
  }
-
-
- paintTile(g,x,y,sel,hover){
-   g.clear();
-   const r=this.s(8);
-   if(sel){
-     g.fillStyle(0xcfc4a2,1);
-     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.fillStyle(0xffffff,0.08);
-     g.fillRoundedRect(x+1,y+1,this.TILE_W-2,this.TILE_H/2,{tl:r,tr:r,bl:0,br:0});
-   } else if(hover){
-     g.fillStyle(0x161616,1);
-     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.lineStyle(1,0x333333,1);
-     g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-   } else {
-     g.fillStyle(0x111111,1);
-     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.lineStyle(1,0x1c1c1c,1);
-     g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-   }
- }
-
-
- onTileClick(tile,g,txt,x,y){
-   if(this.gameOver||this.animLock) return;
-   const key=this.tileKey(tile);
-   if(this.selected.has(key)){
-     this.selected.delete(key);
-     this.paintTile(g,x,y,false,false);
-     txt.setColor('#8a877f');

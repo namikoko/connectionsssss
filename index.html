@@ -224,3 +224,12 @@ class ClusterScene extends Phaser.Scene {
         if(state==='disabled'){g.fillStyle(0x2a2a2a,1);g.fillRoundedRect(x,cy-h/2,w,h,r);}
         else if(state==='hover'){g.fillStyle(0x3c3c3c,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}
         else{g.fillStyle(0x333333,1);g.fillRoundedRect(x,cy-h/2,w,h,r);g.lineStyle(this.s(1),0x555,1);g.strokeRoundedRect(x,cy-h/2,w,h,r);}
+        draw('normal');
+    const zone=this.add.zone(x,cy-h/2,w,h).setOrigin(0,0).setInteractive({cursor:'pointer'});
+    zone.on('pointerover',()=>{if(isSubmit&&this.selected.size!==4)return;draw('hover');});
+    zone.on('pointerout', ()=>{if(isSubmit&&this.selected.size===4){draw('active');return;}draw('normal');});
+    zone.on('pointerup',  ()=>{if(!this.gameOver&&!this.animLock)cb();});
+    return{g,lbl,draw};
+  }
+
+  refreshSubmit(){if(this.submitRef)this.submitRef.draw(this.selected.size===4?'active':'normal');}

@@ -386,3 +386,8 @@ function gameAction(action){
    case 'clue':    scene.doClue();    break;
  }
 }
+//  Phaser game config
+const DPR = Math.min(window.devicePixelRatio||5, 5);
+const W   = Math.round(Math.min(500, window.innerWidth-18)*DPR);
+const H   = Math.round(310*DPR);
+let phaserGame = null;

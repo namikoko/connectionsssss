@@ -660,3 +660,28 @@ this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,e
        o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
        o.txt.setColor('#c25050');
      });
+        // elastic horizontal shake
+     const amp=[this.s(8),-this.s(14),this.s(10),-this.s(6),this.s(3),0];
+     let shakeDelay=0;
+     amp.forEach((dx)=>{
+       selObjs.forEach(o=>{
+         this.tweens.add({targets:o.g,x:dx,duration:45,ease:'Sine.easeInOut',delay:shakeDelay});
+         this.tweens.add({targets:o.txt,x:o.x+this.TILE_W/2+dx,duration:45,ease:'Sine.easeInOut',delay:shakeDelay});
+       });
+       shakeDelay+=45;
+     });
+
+
+     this.time.delayedCall(600,()=>{
+       this.selected.clear();
+       updateSubmitBtn(false, 0);
+       this.animLock=false;
+       this.fullRedraw(true);
+       if(this.mistakes>=this.maxMistakes){
+         this.time.delayedCall(300,()=>this.endGame(false));
+       }
+     });
+   }
+ }
+
+

@@ -576,5 +576,16 @@ this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,e
      this.time.delayedCall(1600,()=>this.endGame(false));
    }
  }
+ doSubmit(){
+   if(this.selected.size!==4||this.animLock||this.gameOver) return;
+   const selObjs=this.tileObjs.filter(o=>this.selected.has(this.tileKey(o.tile)));
+   const cats=selObjs.map(o=>o.tile.catIndex);
+   const allSame=cats.every(c=>c===cats[0]);
 
+
+   if(allSame){
+     this.animLock=true;
+     const ci=cats[0];
+     const cat=this.puzzleData.categories[ci];
+     const targetY=this.solvedCats.length*(this.SOL_H+this.GAP)+this.SOL_H/2;
 

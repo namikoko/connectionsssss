@@ -589,3 +589,74 @@ this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,e
      const cat=this.puzzleData.categories[ci];
      const targetY=this.solvedCats.length*(this.SOL_H+this.GAP)+this.SOL_H/2;
 
+    // Phase 1: flash tiles with category color
+     selObjs.forEach(o=>{
+       o.g.clear();
+       const r=this.s(8);
+       o.g.fillStyle(cat.accent,1);
+       o.g.fillRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       o.txt.setColor('#0a0a0a');
+     });
+
+
+     // Phase 2: after flash, fly tiles to the solved row position
+     this.time.delayedCall(350,()=>{
+       const centerX=W/2;
+       let done=0;
+       selObjs.forEach((o,i)=>{
+         // fly to center-top
+         this.tweens.add({
+           targets:o.g,
+           x:centerX-o.x-this.TILE_W/2,
+           y:targetY-o.y-this.TILE_H/2,
+           scaleX:0.3, scaleY:0.3, alpha:0,
+           duration:380, delay:i*50, ease:'Cubic.easeIn'
+         });
+         this.tweens.add({
+           targets:o.txt,
+           x:centerX, y:targetY,
+           scaleX:0, scaleY:0, alpha:0,
+           duration:380, delay:i*50, ease:'Cubic.easeIn',
+           onComplete:()=>{
+             done++;
+             if(done===selObjs.length){
+               // spawn small particles at merge point
+               this.spawnParticles(centerX,targetY,cat.accent,12);
+               this.time.delayedCall(100,()=>{
+                 this.solvedCats.push(ci);
+                 this.selected.clear();
+                 this.animLock=false;
+                 updateSubmitBtn(false, 0);
+                 this.fullRedraw(true);
+                 const msgs=['Nice.','Correct.','Brilliant.','Nailed it.','Stellar.','Sharp.'];
+                 showMsg(msgs[Math.floor(Math.random()*msgs.length)],'#7abf8e',1600);
+                 if(this.solvedCats.length===4){
+                   this.time.delayedCall(600,()=>this.endGame(true));
+                 }
+               });
+             }
+           }
+         });
+       });
+     });
+   } else {
+     this.mistakes++;
+     updateLives(this.mistakes,this.maxMistakes);
+     const freq={};
+     cats.forEach(c=>freq[c]=(freq[c]||0)+1);
+     const oneAway=Object.values(freq).some(v=>v===3);
+     showMsg(oneAway?'One away\u2026':'Not quite.','#d4c47a',1800);
+
+
+     // elastic shake + red flash
+     this.animLock=true;
+     selObjs.forEach(o=>{
+       // flash red
+       o.g.clear();
+       const r=this.s(8);
+       o.g.fillStyle(0x3a1515,1);
+       o.g.fillRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       o.g.lineStyle(1,0x6b2a2a,1);
+       o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       o.txt.setColor('#c25050');
+     });

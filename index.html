@@ -411,23 +411,6 @@ class ClusterScene extends Phaser.Scene {
    updateSubmitBtn(false, 0);
    this.fullRedraw(true);
  }
-create(){
-   this.allTiles   = shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
-   this.selected   = new Set();
-   this.solvedCats = [];
-   this.mistakes   = 0;
-   this.maxMistakes= 4;
-   this.gameOver   = false;
-   this.animLock   = false;
-   this.tileObjs   = [];
-
-
-   updateLives(0, this.maxMistakes);
-   showMsg('', '#444', 0);
-   setToolbarEnabled(true);
-   updateSubmitBtn(false, 0);
-   this.fullRedraw(true);
- }
  s(n){ return Math.round(n*DPR); }
  get PAD()     { return this.s(18); }
  get GAP()     { return this.s(7);  }
@@ -488,25 +471,41 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      const y=this.GRID_TOP+row*(this.TILE_H+this.GAP);
      const sel=this.selected.has(this.tileKey(tile));
      const g=this.add.graphics();
+     const key=this.tileKey(tile);
      this.paintTile(g,x,y,sel,false);
      const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
        fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',
        color:sel?'#0a0a0a':'#8a877f',align:'center',
        wordWrap:{width:this.TILE_W-this.s(14)}
      }).setOrigin(0.5,0.5);
-this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
-   } else {
-     if(this.selected.size>=4) return;
-     this.selected.add(key);
-     this.paintTile(g,x,y,true,false);
-     txt.setColor('#0a0a0a');
-     // select spring bounce
-     this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
-   }
-   updateSubmitBtn(this.selected.size===4, this.selected.size);
+     const o={g,txt,x,y,tile};
+     this.tileObjs.push(o);
+     g.setInteractive(new Phaser.Geom.Rectangle(0,0,this.TILE_W,this.TILE_H),Phaser.Geom.Rectangle.Contains);
+     g.on('pointerup',()=>{
+       if(sel){
+         this.selected.delete(key);
+         this.paintTile(g,x,y,false,false);
+         txt.setColor('#8a877f');
+         this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
+       } else {
+         if(this.selected.size>=4) return;
+         this.selected.add(key);
+         this.paintTile(g,x,y,true,false);
+         txt.setColor('#0a0a0a');
+         this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
+       }
+       updateSubmitBtn(this.selected.size===4, this.selected.size);
+     });
+   });
  }
-
-
+ paintTile(g,x,y,selected,hover){
+   g.clear();
+   const r=this.s(8);
+   g.fillStyle(selected?0x2a2a2a:0x111111,1);
+   g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+   g.lineStyle(1,selected?0x4a4a4a:0x1a1a1a,0.5);
+   g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+ }
  doShuffle(){
    if(this.gameOver||this.animLock) return;
    this.animLock=true;
@@ -746,4 +745,30 @@ this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,e
    zone.on('pointerup',()=>startGame());
  }
 }
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+function startGame(){
+ const puzzle=getRandomPuzzle();
+ document.getElementById('puzzle-meta').textContent='No. '+puzzle.id+'  \u00b7  '+puzzle.date;
+ if(phaserGame){
+   phaserGame.scene.getScene('ClusterScene').scene.restart({puzzle});
+ } else {
+   phaserGame=new Phaser.Game({
+     type:Phaser.AUTO, width:W, height:H, backgroundColor:'#090909',
+     parent:document.getElementById('game-wrapper'),
+     resolution:DPR,
+     scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.CENTER_HORIZONTALLY,zoom:1/DPR},
+     callbacks:{
+       postBoot:function(game){
+         game.scene.add('ClusterScene',ClusterScene,true,{puzzle});
+       }
+     }
+   });
+ }
+}
+
+
+startGame();
+</script>
+</body>
+</html>
 

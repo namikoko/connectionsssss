@@ -480,9 +480,11 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      }).setOrigin(0.5,0.5);
      const o={g,txt,x,y,tile};
      this.tileObjs.push(o);
+     g.setPosition(x,y);
      g.setInteractive(new Phaser.Geom.Rectangle(0,0,this.TILE_W,this.TILE_H),Phaser.Geom.Rectangle.Contains);
      g.on('pointerup',()=>{
-       if(sel){
+       const isSelected=this.selected.has(key);
+       if(isSelected){
          this.selected.delete(key);
          this.paintTile(g,x,y,false,false);
          txt.setColor('#8a877f');

@@ -608,8 +608,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
          // fly to center-top
          this.tweens.add({
            targets:o.g,
-           x:centerX-o.x-this.TILE_W/2,
-           y:targetY-o.y-this.TILE_H/2,
+           x:centerX-this.TILE_W/2,
+           y:targetY-this.TILE_H/2,
            scaleX:0.3, scaleY:0.3, alpha:0,
            duration:380, delay:i*50, ease:'Cubic.easeIn'
          });

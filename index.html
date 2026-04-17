@@ -22,14 +22,14 @@
    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
    background-size:180px;
  }
- /* glow */
+ /* ambient glow */
  body::after{
    content:'';position:fixed;top:-40%;left:50%;transform:translateX(-50%);
    width:600px;height:600px;
    background:radial-gradient(circle,rgba(207,196,162,0.03) 0%,transparent 70%);
    pointer-events:none;z-index:0;
  }
-  #chrome{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center;}
+ #chrome{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center;}
  #top-bar{
    width:100%;max-width:520px;padding:36px 20px 0;
    display:flex;flex-direction:column;align-items:center;gap:0;
@@ -46,7 +46,6 @@
    font-family:'DM Mono',monospace;font-size:9px;color:#3a3a3a;
    letter-spacing:3px;text-transform:uppercase;margin-top:8px;
  }
-
  #rule{
    width:100%;max-width:520px;height:1px;margin:20px 0 16px;
    background:linear-gradient(to right,transparent,#1e1e1e 20%,#1e1e1e 80%,transparent);
@@ -132,7 +131,7 @@
 
 
 <script>
-//  Embedded puzzles from NYT Connections API (https://github.com/Eyefyre/NYT-Connections-Answers)
+// ── Embedded puzzles ──────────────────────────────────────────────────────────
 const PUZZLES = [
  {id:1,date:"2023-06-12",categories:[
    {level:0,label:"FISH",words:["BASS","FLOUNDER","PIKE","TROUT"]},
@@ -241,7 +240,7 @@ const PUZZLES = [
    {level:1,label:"WORDS BEFORE WATER",words:["BACK","DEEP","FLOOD","RAIN"]},
    {level:2,label:"FAMOUS PAIRS",words:["BONNIE","ROMEO","SALT","THUNDER"]},
    {level:3,label:"___ HOUSE",words:["DOG","FULL","OPEN","WARE"]}
- ]} ,
+ ]},
  {id:19,date:"2024-01-05",categories:[
    {level:0,label:"PARTS OF A BOOK",words:["CHAPTER","COVER","PAGE","SPINE"]},
    {level:1,label:"WORDS AFTER WATER",words:["COLOR","FALL","MARK","PROOF"]},
@@ -315,7 +314,9 @@ const PUZZLES = [
    {level:3,label:"___ BONE",words:["BACK","JAW","TROM","WISH"]}
  ]}
 ];
-// Colour palette 
+
+
+// ── Colour palette ────────────────────────────────────────────────────────────
 const LEVEL_COLORS = [
  { accent:0xd4c47a, hex:'#d4c47a', glow:'rgba(212,196,122,' },
  { accent:0x7abf8e, hex:'#7abf8e', glow:'rgba(122,191,142,' },
@@ -339,7 +340,9 @@ function getRandomPuzzle(){
    }))
  };
 }
-// DOM helpers
+
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
 const $msg    = ()=>document.getElementById('msg-bar');
 const $submit = ()=>document.getElementById('btn-submit');
 let msgTimer  = null;
@@ -373,7 +376,9 @@ function setToolbarEnabled(enabled){
    el.style.opacity=enabled?'1':'0.3'; el.style.pointerEvents=enabled?'auto':'none';
  });
 }
-// ── Game action (DOM to Phaser)
+
+
+// ── Game action bridge (DOM -> Phaser) ────────────────────────────────────────
 function gameAction(action){
  if(!phaserGame) return;
  if(action==='quit'){ startGame(); return; }
@@ -386,14 +391,20 @@ function gameAction(action){
    case 'clue':    scene.doClue();    break;
  }
 }
-//  Phaser game config
+
+
+// ── Phaser ────────────────────────────────────────────────────────────────────
 const DPR = Math.min(window.devicePixelRatio||1, 2);
 const W   = Math.round(Math.min(490, window.innerWidth-16)*DPR);
 const H   = Math.round(310*DPR);
 let phaserGame = null;
+
+
 class ClusterScene extends Phaser.Scene {
  constructor(){ super({key:'ClusterScene'}); }
  init(data){ this.puzzleData=data.puzzle; }
+
+
  create(){
    this.allTiles   = shuffle(this.puzzleData.categories.flatMap((cat,ci)=>cat.words.map(w=>({word:w,catIndex:ci}))));
    this.selected   = new Set();
@@ -411,6 +422,8 @@ class ClusterScene extends Phaser.Scene {
    updateSubmitBtn(false, 0);
    this.fullRedraw(true);
  }
+
+
  s(n){ return Math.round(n*DPR); }
  get PAD()     { return this.s(18); }
  get GAP()     { return this.s(7);  }
@@ -440,7 +453,7 @@ class ClusterScene extends Phaser.Scene {
      g.fillStyle(0x111111,1);
      g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
      g.fillStyle(cat.accent,1);
-g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0});
+     g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0});
      g.fillStyle(cat.accent,0.04);
      g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
      g.lineStyle(1,cat.accent,0.12);
@@ -463,6 +476,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      }
    });
  }
+
+
  drawTiles(animate){
    const active=this.activeTiles();
    active.forEach((tile,i)=>{
@@ -471,43 +486,76 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      const y=this.GRID_TOP+row*(this.TILE_H+this.GAP);
      const sel=this.selected.has(this.tileKey(tile));
      const g=this.add.graphics();
-     const key=this.tileKey(tile);
      this.paintTile(g,x,y,sel,false);
      const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
        fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',
        color:sel?'#0a0a0a':'#8a877f',align:'center',
        wordWrap:{width:this.TILE_W-this.s(14)}
      }).setOrigin(0.5,0.5);
-     const o={g,txt,x,y,tile};
-     this.tileObjs.push(o);
-     g.setPosition(x,y);
-     g.setInteractive(new Phaser.Geom.Rectangle(0,0,this.TILE_W,this.TILE_H),Phaser.Geom.Rectangle.Contains);
-     g.on('pointerup',()=>{
-       const isSelected=this.selected.has(key);
-       if(isSelected){
-         this.selected.delete(key);
-         this.paintTile(g,x,y,false,false);
-         txt.setColor('#8a877f');
-         this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
-       } else {
-         if(this.selected.size>=4) return;
-         this.selected.add(key);
-         this.paintTile(g,x,y,true,false);
-         txt.setColor('#0a0a0a');
-         this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
-       }
-       updateSubmitBtn(this.selected.size===4, this.selected.size);
-     });
+
+
+     // staggered entrance
+     if(animate){
+       const delay=i*35;
+       g.setAlpha(0); g.y=this.s(18);
+       txt.setAlpha(0); txt.y+=this.s(18);
+       this.tweens.add({targets:g,y:0,alpha:1,duration:320,ease:'Back.easeOut',delay});
+       this.tweens.add({targets:txt,y:txt.y-this.s(18),alpha:1,duration:320,ease:'Back.easeOut',delay});
+     }
+
+
+     const zone=this.add.zone(x,y,this.TILE_W,this.TILE_H).setOrigin(0,0).setInteractive({cursor:'pointer'});
+     zone.on('pointerover',()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,true); });
+     zone.on('pointerout', ()=>{ if(!this.selected.has(this.tileKey(tile))) this.paintTile(g,x,y,false,false); });
+     zone.on('pointerup',  ()=>this.onTileClick(tile,g,txt,x,y));
+     this.tileObjs.push({tile,g,txt,zone,x,y});
    });
  }
- paintTile(g,x,y,selected,hover){
+
+
+ paintTile(g,x,y,sel,hover){
    g.clear();
    const r=this.s(8);
-   g.fillStyle(selected?0x2a2a2a:0x111111,1);
-   g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-   g.lineStyle(1,selected?0x4a4a4a:0x1a1a1a,0.5);
-   g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+   if(sel){
+     g.fillStyle(0xcfc4a2,1);
+     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+     g.fillStyle(0xffffff,0.08);
+     g.fillRoundedRect(x+1,y+1,this.TILE_W-2,this.TILE_H/2,{tl:r,tr:r,bl:0,br:0});
+   } else if(hover){
+     g.fillStyle(0x161616,1);
+     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+     g.lineStyle(1,0x333333,1);
+     g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+   } else {
+     g.fillStyle(0x111111,1);
+     g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+     g.lineStyle(1,0x1c1c1c,1);
+     g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
+   }
  }
+
+
+ onTileClick(tile,g,txt,x,y){
+   if(this.gameOver||this.animLock) return;
+   const key=this.tileKey(tile);
+   if(this.selected.has(key)){
+     this.selected.delete(key);
+     this.paintTile(g,x,y,false,false);
+     txt.setColor('#8a877f');
+     // deselect spring
+     this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
+   } else {
+     if(this.selected.size>=4) return;
+     this.selected.add(key);
+     this.paintTile(g,x,y,true,false);
+     txt.setColor('#0a0a0a');
+     // select spring bounce
+     this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
+   }
+   updateSubmitBtn(this.selected.size===4, this.selected.size);
+ }
+
+
  doShuffle(){
    if(this.gameOver||this.animLock) return;
    this.animLock=true;
@@ -526,6 +574,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      this.animLock=false;
    });
  }
+
+
  doClear(){
    if(this.gameOver||this.animLock) return;
    this.selected.clear();
@@ -577,6 +627,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      this.time.delayedCall(1600,()=>this.endGame(false));
    }
  }
+
+
  doSubmit(){
    if(this.selected.size!==4||this.animLock||this.gameOver) return;
    const selObjs=this.tileObjs.filter(o=>this.selected.has(this.tileKey(o.tile)));
@@ -590,7 +642,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
      const cat=this.puzzleData.categories[ci];
      const targetY=this.solvedCats.length*(this.SOL_H+this.GAP)+this.SOL_H/2;
 
-    // Phase 1: flash tiles with category color
+
+     // Phase 1: flash tiles with category color
      selObjs.forEach(o=>{
        o.g.clear();
        const r=this.s(8);
@@ -661,7 +714,9 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
        o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
        o.txt.setColor('#c25050');
      });
-        // elastic horizontal shake
+
+
+     // elastic horizontal shake
      const amp=[this.s(8),-this.s(14),this.s(10),-this.s(6),this.s(3),0];
      let shakeDelay=0;
      amp.forEach((dx)=>{
@@ -685,7 +740,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
    }
  }
 
- /* Particle burst helper */
+
+ /* ── Particle burst helper ──────────────────────────────────── */
  spawnParticles(cx,cy,color,count){
    for(let i=0;i<count;i++){
      const angle=Math.random()*Math.PI*2;
@@ -747,6 +803,8 @@ g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0}
    zone.on('pointerup',()=>startGame());
  }
 }
+
+
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 function startGame(){
  const puzzle=getRandomPuzzle();
@@ -773,4 +831,3 @@ startGame();
 </script>
 </body>
 </html>
-

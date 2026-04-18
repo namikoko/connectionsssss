@@ -7,13 +7,40 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
 <style>
+ :root {
+   --bg-primary: #ffffff;
+   --bg-secondary: #fff5f9;
+   --text-primary: #333333;
+   --text-secondary: #666666;
+   --accent-primary: #ff69b4;
+   --accent-light: #ffb6d9;
+   --border-color: #ffe0f0;
+   --tile-bg: #fff9fc;
+   --tile-border: #ffd4e5;
+   --solved-bg: #fff0f6;
+ }
+
+ html.dark-mode {
+   --bg-primary: #1a1a1a;
+   --bg-secondary: #2a1a2a;
+   --text-primary: #ffffff;
+   --text-secondary: #d0d0d0;
+   --accent-primary: #ff69b4;
+   --accent-light: #ff85c1;
+   --border-color: #4a2a4a;
+   --tile-bg: #2a1a2a;
+   --tile-border: #4a2a4a;
+   --solved-bg: #3a2a3a;
+ }
+
  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
  html,body{
    width:100%;min-height:100vh;
-   background:#090909;
+   background:var(--bg-primary);
    display:flex;flex-direction:column;align-items:center;
    overflow-x:hidden;
    position:relative;
+   transition:background-color 0.3s ease;
  }
  /* subtle noise overlay */
  body::before{
@@ -22,12 +49,16 @@
    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
    background-size:180px;
  }
- /* ambient glow */
+ /* ambient glow - girly pink */
  body::after{
    content:'';position:fixed;top:-40%;left:50%;transform:translateX(-50%);
    width:600px;height:600px;
-   background:radial-gradient(circle,rgba(207,196,162,0.03) 0%,transparent 70%);
+   background:radial-gradient(circle,rgba(255,105,180,0.08) 0%,transparent 70%);
    pointer-events:none;z-index:0;
+   transition:background 0.3s ease;
+ }
+ html.dark-mode::after{
+   background:radial-gradient(circle,rgba(255,105,180,0.05) 0%,transparent 70%);
  }
  #chrome{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center;}
  #top-bar{
@@ -35,20 +66,20 @@
    display:flex;flex-direction:column;align-items:center;gap:0;
  }
  #top-bar .issue{
-   font-family:'DM Mono',monospace;font-size:9px;color:#2a2a2a;
+   font-family:'DM Mono',monospace;font-size:9px;color:var(--text-secondary);
    letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;
  }
  #top-bar h1{
    font-family:'Instrument Serif',serif;font-size:52px;font-weight:400;
-   color:#e8e4dc;letter-spacing:1px;line-height:1;
+   color:var(--accent-primary);letter-spacing:1px;line-height:1;
  }
  #top-bar .subtitle{
-   font-family:'DM Mono',monospace;font-size:9px;color:#3a3a3a;
+   font-family:'DM Mono',monospace;font-size:9px;color:var(--text-secondary);
    letter-spacing:3px;text-transform:uppercase;margin-top:8px;
  }
  #rule{
    width:100%;max-width:520px;height:1px;margin:20px 0 16px;
-   background:linear-gradient(to right,transparent,#1e1e1e 20%,#1e1e1e 80%,transparent);
+   background:linear-gradient(to right,transparent,var(--border-color) 20%,var(--border-color) 80%,transparent);
  }
  #toolbar{
    width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;
@@ -57,37 +88,37 @@
  #toolbar .left,#toolbar .right{display:flex;gap:8px;align-items:center;}
  .tool-btn{
    font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;
-   color:#333;background:none;border:1px solid #1a1a1a;border-radius:100px;
+   color:var(--text-secondary);background:none;border:1px solid var(--border-color);border-radius:100px;
    padding:6px 14px;cursor:pointer;transition:all 0.3s ease;
  }
- .tool-btn:hover{color:#888;border-color:#333;}
- .tool-btn.accent{color:#090909;background:#cfc4a2;border-color:#cfc4a2;font-weight:500;}
- .tool-btn.accent:hover{background:#e0d7b8;border-color:#e0d7b8;}
+ .tool-btn:hover{color:var(--accent-primary);border-color:var(--accent-primary);}
+ .tool-btn.accent{color:#ffffff;background:var(--accent-primary);border-color:var(--accent-primary);font-weight:500;}
+ .tool-btn.accent:hover{background:var(--accent-light);border-color:var(--accent-light);}
  .tool-btn.check{padding:8px 24px;font-size:10px;letter-spacing:3px;position:relative;}
  .tool-btn.check .count{
    display:inline-block;margin-left:6px;
    min-width:14px;height:14px;line-height:14px;text-align:center;
    border-radius:7px;font-size:8px;letter-spacing:0;
-   background:#2a2a2a;color:#555;
+   background:var(--border-color);color:var(--accent-primary);
    transition:all 0.3s ease;
  }
- .tool-btn.check.accent .count{background:rgba(0,0,0,0.15);color:#090909;}
- .tool-btn.danger{color:#6b3a3a;border-color:#2a1a1a;}
- .tool-btn.danger:hover{color:#c25050;border-color:#3a2020;}
+ .tool-btn.check.accent .count{background:rgba(255,255,255,0.3);color:#ffffff;}
+ .tool-btn.danger{color:#d9535f;border-color:var(--border-color);}
+ .tool-btn.danger:hover{color:#ff6b7a;border-color:var(--accent-primary);}
  #lives-row{display:flex;align-items:center;gap:6px;}
- #lives-row .label{font-family:'DM Mono',monospace;font-size:8px;color:#2a2a2a;letter-spacing:2px;text-transform:uppercase;margin-right:4px;}
- .life-pip{width:6px;height:6px;border-radius:50%;background:#cfc4a2;transition:all 0.5s ease;}
- .life-pip.spent{background:#1a1a1a;transform:scale(0.7);}
+ #lives-row .label{font-family:'DM Mono',monospace;font-size:8px;color:var(--text-secondary);letter-spacing:2px;text-transform:uppercase;margin-right:4px;}
+ .life-pip{width:6px;height:6px;border-radius:50%;background:var(--accent-primary);transition:all 0.5s ease;}
+ .life-pip.spent{background:var(--border-color);transform:scale(0.7);}
  #game-wrapper{
    width:100%;max-width:520px;display:flex;justify-content:center;
    position:relative;z-index:1;
  }
- #game-wrapper canvas{width:100%!important;height:auto!important;}
+ #game-wrapper canvas{width:100%!important;height:auto!important;display:block;background:transparent!important;image-rendering:auto;-webkit-font-smoothing:antialiased;}
  #msg-bar{
    width:100%;max-width:520px;height:24px;
    display:flex;justify-content:center;align-items:center;
    font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;
-   color:#444;text-transform:uppercase;
+   color:var(--text-secondary);text-transform:uppercase;
    transition:all 0.4s ease;margin-top:2px;
  }
  #footer{
@@ -95,9 +126,31 @@
    display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
    align-items:center;
  }
+ .theme-toggle {
+   position:fixed;top:20px;right:20px;z-index:1000;
+   width:50px;height:50px;
+   border-radius:50%;
+   background:var(--accent-primary);
+   border:2px solid var(--accent-light);
+   cursor:pointer;
+   display:flex;align-items:center;justify-content:center;
+   font-size:24px;
+   transition:all 0.3s ease;
+   box-shadow:0 2px 12px rgba(255,105,180,0.3);
+ }
+ .theme-toggle:hover {
+   transform:scale(1.1);
+   box-shadow:0 4px 16px rgba(255,105,180,0.5);
+ }
+ html.dark-mode .theme-toggle {
+   background:var(--bg-secondary);
+   border-color:var(--accent-primary);
+   box-shadow:0 2px 12px rgba(255,105,180,0.5);
+ }
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
 <div id="chrome">
  <div id="top-bar">
    <div class="issue" id="puzzle-meta"></div>
@@ -318,10 +371,10 @@ const PUZZLES = [
 
 // ── Colour palette ────────────────────────────────────────────────────────────
 const LEVEL_COLORS = [
- { accent:0xd4c47a, hex:'#d4c47a', glow:'rgba(212,196,122,' },
- { accent:0x7abf8e, hex:'#7abf8e', glow:'rgba(122,191,142,' },
- { accent:0x7aacd4, hex:'#7aacd4', glow:'rgba(122,172,212,' },
- { accent:0xb48fd6, hex:'#b48fd6', glow:'rgba(180,143,214,' }
+ { accent:0xff69b4, hex:'#ff69b4', glow:'rgba(255,105,180,' },
+ { accent:0xff1493, hex:'#ff1493', glow:'rgba(255,20,147,' },
+ { accent:0xc71585, hex:'#c71585', glow:'rgba(199,21,133,' },
+ { accent:0xff85c1, hex:'#ff85c1', glow:'rgba(255,133,193,' }
 ];
 
 
@@ -346,6 +399,30 @@ function getRandomPuzzle(){
 const $msg    = ()=>document.getElementById('msg-bar');
 const $submit = ()=>document.getElementById('btn-submit');
 let msgTimer  = null;
+
+
+// ── Theme Toggle ──────────────────────────────────────────────────────────────
+function initThemeToggle() {
+ const toggle = document.getElementById('theme-toggle');
+ const isDark = localStorage.getItem('darkMode') === 'true';
+ if (isDark) {
+   document.documentElement.classList.add('dark-mode');
+   toggle.textContent = '☀️';
+ }
+ toggle.addEventListener('click', () => {
+   const isDarkNow = document.documentElement.classList.toggle('dark-mode');
+   localStorage.setItem('darkMode', isDarkNow);
+   toggle.textContent = isDarkNow ? '☀️' : '🌙';
+   
+   // Redraw tiles to match new theme colors
+   if(phaserGame) {
+     const scene = phaserGame.scene.getScene('ClusterScene');
+     if(scene && !scene.animLock) {
+       scene.fullRedraw(false);
+     }
+   }
+ });
+}
 
 
 function showMsg(text, color, duration){
@@ -415,7 +492,6 @@ class ClusterScene extends Phaser.Scene {
    this.animLock   = false;
    this.tileObjs   = [];
 
-
    updateLives(0, this.maxMistakes);
    showMsg('', '#444', 0);
    setToolbarEnabled(true);
@@ -450,7 +526,9 @@ class ClusterScene extends Phaser.Scene {
      const cat=this.puzzleData.categories[ci];
      const x=this.PAD, y=row*(this.SOL_H+this.GAP), rw=W-this.PAD*2;
      const g=this.add.graphics();
-     g.fillStyle(0x111111,1);
+     const isDark = document.documentElement.classList.contains('dark-mode');
+     const solvedBg = isDark ? 0x2a1a2a : 0xfff0f6;
+     g.fillStyle(solvedBg,1);
      g.fillRoundedRect(x,y,rw,this.SOL_H,this.s(8));
      g.fillStyle(cat.accent,1);
      g.fillRoundedRect(x,y,this.s(3),this.SOL_H,{tl:this.s(8),bl:this.s(8),tr:0,br:0});
@@ -462,17 +540,17 @@ class ClusterScene extends Phaser.Scene {
        fontFamily:'DM Mono',fontSize:this.s(9)+'px',color:cat.hex,letterSpacing:this.s(2)
      });
      const wds=this.add.text(x+this.s(18),y+this.s(30),cat.words.join('  \u00b7  '),{
-       fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'500',color:'#706d66'
+       fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'500',color:'#b05090'
      });
-     // animate newest solved row sliding in
+     // animate newest solved row
      const isNewest = animate && row===this.solvedCats.length-1;
      if(isNewest){
-       g.setAlpha(0); g.x=-this.s(40);
-       lbl.setAlpha(0); lbl.x-=this.s(40);
-       wds.setAlpha(0); wds.x-=this.s(40);
-       this.tweens.add({targets:g,x:0,alpha:1,duration:420,ease:'Back.easeOut',delay:50});
-       this.tweens.add({targets:lbl,x:lbl.x+this.s(40),alpha:1,duration:420,ease:'Back.easeOut',delay:100});
-       this.tweens.add({targets:wds,x:wds.x+this.s(40),alpha:1,duration:420,ease:'Back.easeOut',delay:150});
+       g.setAlpha(0);
+       lbl.setAlpha(0);
+       wds.setAlpha(0);
+       this.tweens.add({targets:g,alpha:1,duration:400,ease:'Sine.easeOut',delay:50});
+       this.tweens.add({targets:lbl,alpha:1,duration:400,ease:'Sine.easeOut',delay:150});
+       this.tweens.add({targets:wds,alpha:1,duration:400,ease:'Sine.easeOut',delay:250});
      }
    });
  }
@@ -489,18 +567,18 @@ class ClusterScene extends Phaser.Scene {
      this.paintTile(g,x,y,sel,false);
      const txt=this.add.text(x+this.TILE_W/2,y+this.TILE_H/2,tile.word,{
        fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',
-       color:sel?'#0a0a0a':'#8a877f',align:'center',
+       color:'#b05090',align:'center',
        wordWrap:{width:this.TILE_W-this.s(14)}
      }).setOrigin(0.5,0.5);
 
 
      // staggered entrance
      if(animate){
-       const delay=i*35;
-       g.setAlpha(0); g.y=this.s(18);
-       txt.setAlpha(0); txt.y+=this.s(18);
-       this.tweens.add({targets:g,y:0,alpha:1,duration:320,ease:'Back.easeOut',delay});
-       this.tweens.add({targets:txt,y:txt.y-this.s(18),alpha:1,duration:320,ease:'Back.easeOut',delay});
+       const delay=i*30;
+       g.setAlpha(0);
+       txt.setAlpha(0);
+       this.tweens.add({targets:g,alpha:1,duration:300,ease:'Sine.easeOut',delay});
+       this.tweens.add({targets:txt,alpha:1,duration:300,ease:'Sine.easeOut',delay});
      }
 
 
@@ -516,20 +594,25 @@ class ClusterScene extends Phaser.Scene {
  paintTile(g,x,y,sel,hover){
    g.clear();
    const r=this.s(8);
+   const isDark = document.documentElement.classList.contains('dark-mode');
    if(sel){
-     g.fillStyle(0xcfc4a2,1);
+     g.fillStyle(0xff69b4,1);
      g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.fillStyle(0xffffff,0.08);
+     g.fillStyle(0xffffff,0.15);
      g.fillRoundedRect(x+1,y+1,this.TILE_W-2,this.TILE_H/2,{tl:r,tr:r,bl:0,br:0});
    } else if(hover){
-     g.fillStyle(0x161616,1);
+     const hoverBg = isDark ? 0x3a2a3a : 0xfff0f6;
+     const hoverBorder = isDark ? 0xff69b4 : 0xffc0e0;
+     g.fillStyle(hoverBg,1);
      g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.lineStyle(1,0x333333,1);
+     g.lineStyle(1,hoverBorder,1);
      g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
    } else {
-     g.fillStyle(0x111111,1);
+     const tileBg = isDark ? 0x2a1a2a : 0xfff9fc;
+     const tileBorder = isDark ? 0x4a2a4a : 0xffd4e5;
+     g.fillStyle(tileBg,1);
      g.fillRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
-     g.lineStyle(1,0x1c1c1c,1);
+     g.lineStyle(1,tileBorder,1);
      g.strokeRoundedRect(x,y,this.TILE_W,this.TILE_H,r);
    }
  }
@@ -541,16 +624,12 @@ class ClusterScene extends Phaser.Scene {
    if(this.selected.has(key)){
      this.selected.delete(key);
      this.paintTile(g,x,y,false,false);
-     txt.setColor('#8a877f');
-     // deselect spring
-     this.tweens.add({targets:[g,txt],scaleX:0.92,scaleY:0.92,duration:80,yoyo:true,ease:'Sine.easeOut'});
+     txt.setColor('#b05090');
    } else {
      if(this.selected.size>=4) return;
      this.selected.add(key);
      this.paintTile(g,x,y,true,false);
-     txt.setColor('#0a0a0a');
-     // select spring bounce
-     this.tweens.add({targets:[g,txt],scaleX:1.08,scaleY:1.08,duration:100,yoyo:true,ease:'Back.easeOut'});
+     txt.setColor('#ffffff');
    }
    updateSubmitBtn(this.selected.size===4, this.selected.size);
  }
@@ -559,11 +638,9 @@ class ClusterScene extends Phaser.Scene {
  doShuffle(){
    if(this.gameOver||this.animLock) return;
    this.animLock=true;
-   // scatter tiles out
+   // fade out tiles
    this.tileObjs.forEach((o,i)=>{
-     const dx=(Math.random()-0.5)*this.s(60);
-     const dy=(Math.random()-0.5)*this.s(30);
-     this.tweens.add({targets:[o.g,o.txt],alpha:0,x:'+='+dx,y:'+='+dy,duration:200,ease:'Sine.easeIn',delay:i*15});
+     this.tweens.add({targets:[o.g,o.txt],alpha:0,duration:200,ease:'Sine.easeIn',delay:i*10});
    });
    this.time.delayedCall(280,()=>{
      const active=this.activeTiles(), sh=shuffle(active); let si=0;
@@ -581,7 +658,7 @@ class ClusterScene extends Phaser.Scene {
    this.selected.clear();
    this.tileObjs.forEach(o=>{
      this.paintTile(o.g,o.x,o.y,false,false);
-     o.txt.setColor('#8a877f');
+     o.txt.setColor('#b05090');
    });
    updateSubmitBtn(false, 0);
  }
@@ -589,7 +666,7 @@ class ClusterScene extends Phaser.Scene {
 
  doClue(){
    if(this.gameOver||this.animLock) return;
-   if(this.mistakes>=this.maxMistakes-1){
+   if(this.mistakes>=this.maxMistakes-2){
      showMsg('NOT ENOUGH LIVES','#c25050',1800);
      return;
    }
@@ -597,12 +674,12 @@ class ClusterScene extends Phaser.Scene {
    if(unsolved.length===0) return;
    const ci=unsolved[Math.floor(Math.random()*unsolved.length)];
    const cat=this.puzzleData.categories[ci];
-   this.mistakes++;
+   this.mistakes+=2;
    updateLives(this.mistakes,this.maxMistakes);
    showMsg('CLUE \u2014 '+cat.label, cat.hex, 3000);
    const catTiles=this.tileObjs.filter(o=>o.tile.catIndex===ci);
    catTiles.forEach((o,idx)=>{
-     const origColor=this.selected.has(this.tileKey(o.tile))?'#0a0a0a':'#8a877f';
+     const origColor=this.selected.has(this.tileKey(o.tile))?'#ffffff':'#b05090';
      // staggered wave pulse
      this.time.delayedCall(idx*80,()=>{
        o.txt.setColor(cat.hex);
@@ -640,57 +717,40 @@ class ClusterScene extends Phaser.Scene {
      this.animLock=true;
      const ci=cats[0];
      const cat=this.puzzleData.categories[ci];
-     const targetY=this.solvedCats.length*(this.SOL_H+this.GAP)+this.SOL_H/2;
 
-
-     // Phase 1: flash tiles with category color
+     // Highlight correct tiles with accent border, keep text visible
      selObjs.forEach(o=>{
        o.g.clear();
        const r=this.s(8);
-       o.g.fillStyle(cat.accent,1);
+       const isDark = document.documentElement.classList.contains('dark-mode');
+       const bg = isDark ? 0x3a2a3a : 0xfff0f6;
+       o.g.fillStyle(bg,1);
        o.g.fillRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
-       o.txt.setColor('#0a0a0a');
+       o.g.lineStyle(2,cat.accent,1);
+       o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
+       o.txt.setColor(cat.hex);
      });
 
-
-     // Phase 2: after flash, fly tiles to the solved row position
-     this.time.delayedCall(350,()=>{
-       const centerX=W/2;
-       let done=0;
+     // After a moment, fade tiles out and show solved row
+     this.time.delayedCall(600,()=>{
        selObjs.forEach((o,i)=>{
-         // fly to center-top
          this.tweens.add({
-           targets:o.g,
-           x:centerX-o.x-this.TILE_W/2,
-           y:targetY-o.y-this.TILE_H/2,
-           scaleX:0.3, scaleY:0.3, alpha:0,
-           duration:380, delay:i*50, ease:'Cubic.easeIn'
+           targets:[o.g,o.txt],
+           alpha:0,
+           duration:300, delay:i*40, ease:'Sine.easeIn'
          });
-         this.tweens.add({
-           targets:o.txt,
-           x:centerX, y:targetY,
-           scaleX:0, scaleY:0, alpha:0,
-           duration:380, delay:i*50, ease:'Cubic.easeIn',
-           onComplete:()=>{
-             done++;
-             if(done===selObjs.length){
-               // spawn small particles at merge point
-               this.spawnParticles(centerX,targetY,cat.accent,12);
-               this.time.delayedCall(100,()=>{
-                 this.solvedCats.push(ci);
-                 this.selected.clear();
-                 this.animLock=false;
-                 updateSubmitBtn(false, 0);
-                 this.fullRedraw(true);
-                 const msgs=['Nice.','Correct.','Brilliant.','Nailed it.','Stellar.','Sharp.'];
-                 showMsg(msgs[Math.floor(Math.random()*msgs.length)],'#7abf8e',1600);
-                 if(this.solvedCats.length===4){
-                   this.time.delayedCall(600,()=>this.endGame(true));
-                 }
-               });
-             }
-           }
-         });
+       });
+       this.time.delayedCall(500,()=>{
+         this.solvedCats.push(ci);
+         this.selected.clear();
+         this.animLock=false;
+         updateSubmitBtn(false, 0);
+         this.fullRedraw(true);
+         const msgs=['Nice.','Correct.','Brilliant.','Nailed it.','Stellar.','Sharp.'];
+         showMsg(msgs[Math.floor(Math.random()*msgs.length)],'#ff69b4',1600);
+         if(this.solvedCats.length===4){
+           this.time.delayedCall(600,()=>this.endGame(true));
+         }
        });
      });
    } else {
@@ -699,40 +759,45 @@ class ClusterScene extends Phaser.Scene {
      const freq={};
      cats.forEach(c=>freq[c]=(freq[c]||0)+1);
      const oneAway=Object.values(freq).some(v=>v===3);
-     showMsg(oneAway?'One away\u2026':'Not quite.','#d4c47a',1800);
+     showMsg(oneAway?'One away\u2026':'Not quite.','#ff69b4',1800);
 
 
-     // elastic shake + red flash
+     // subtle wrong answer feedback
      this.animLock=true;
      selObjs.forEach(o=>{
-       // flash red
        o.g.clear();
        const r=this.s(8);
-       o.g.fillStyle(0x3a1515,1);
+       const isDark = document.documentElement.classList.contains('dark-mode');
+       const bg = isDark ? 0x2a1a2a : 0xfff9fc;
+       o.g.fillStyle(bg,1);
        o.g.fillRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
-       o.g.lineStyle(1,0x6b2a2a,1);
+       o.g.lineStyle(2,0xff1493,1);
        o.g.strokeRoundedRect(o.x,o.y,this.TILE_W,this.TILE_H,r);
-       o.txt.setColor('#c25050');
+       o.txt.setColor(isDark ? '#ffffff' : '#333333');
      });
 
-
-     // elastic horizontal shake
-     const amp=[this.s(8),-this.s(14),this.s(10),-this.s(6),this.s(3),0];
+     // gentle shake
+     const amp=[this.s(4),-this.s(6),this.s(4),-this.s(2),0];
      let shakeDelay=0;
      amp.forEach((dx)=>{
        selObjs.forEach(o=>{
-         this.tweens.add({targets:o.g,x:dx,duration:45,ease:'Sine.easeInOut',delay:shakeDelay});
-         this.tweens.add({targets:o.txt,x:o.x+this.TILE_W/2+dx,duration:45,ease:'Sine.easeInOut',delay:shakeDelay});
+         this.tweens.add({targets:o.g,x:dx,duration:50,ease:'Sine.easeInOut',delay:shakeDelay});
+         this.tweens.add({targets:o.txt,x:o.x+this.TILE_W/2+dx,duration:50,ease:'Sine.easeInOut',delay:shakeDelay});
        });
-       shakeDelay+=45;
+       shakeDelay+=50;
      });
 
 
-     this.time.delayedCall(600,()=>{
+     this.time.delayedCall(500,()=>{
        this.selected.clear();
        updateSubmitBtn(false, 0);
        this.animLock=false;
-       this.fullRedraw(true);
+       // Just repaint tiles back to normal instead of full redraw
+       selObjs.forEach(o=>{
+         o.g.x=0; o.txt.x=o.x+this.TILE_W/2;
+         this.paintTile(o.g,o.x,o.y,false,false);
+         o.txt.setColor('#b05090');
+       });
        if(this.mistakes>=this.maxMistakes){
          this.time.delayedCall(300,()=>this.endGame(false));
        }
@@ -777,9 +842,9 @@ class ClusterScene extends Phaser.Scene {
      this.fullRedraw(true);
      showMsg('Better luck next time.','#555',0);
    } else {
-     showMsg('All four found.','#7abf8e',0);
+     showMsg('All four found.','#ff69b4',0);
      // celebratory burst from multiple points
-     const colors=[0xd4c47a,0x7abf8e,0x7aacd4,0xb48fd6];
+     const colors=[0xff69b4,0xff1493,0xc71585,0xff85c1];
      for(let b=0;b<4;b++){
        this.time.delayedCall(b*180,()=>{
          const bx=this.s(60)+Math.random()*(W-this.s(120));
@@ -792,11 +857,11 @@ class ClusterScene extends Phaser.Scene {
    const cy=this.solvedCats.length*(this.SOL_H+this.GAP)+this.s(36);
    const bw=this.s(140),bh=this.s(36);
    const g=this.add.graphics();
-   g.fillStyle(0xcfc4a2,1);
+   g.fillStyle(0xff69b4,1);
    g.fillRoundedRect(W/2-bw/2,cy-bh/2,bw,bh,bh/2);
    g.setAlpha(0);
    const btnTxt=this.add.text(W/2,cy,'New Puzzle',{
-     fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',color:'#0a0a0a',letterSpacing:this.s(1)
+     fontFamily:'Space Grotesk',fontSize:this.s(11)+'px',fontStyle:'600',color:'#ffffff',letterSpacing:this.s(1)
    }).setOrigin(0.5,0.5).setAlpha(0);
    this.tweens.add({targets:[g,btnTxt],alpha:1,duration:500,ease:'Sine.easeOut',delay:win?800:400});
    const zone=this.add.zone(W/2-bw/2,cy-bh/2,bw,bh).setOrigin(0,0).setInteractive({cursor:'pointer'});
@@ -812,8 +877,11 @@ function startGame(){
  if(phaserGame){
    phaserGame.scene.getScene('ClusterScene').scene.restart({puzzle});
  } else {
+   const isDarkMode = document.documentElement.classList.contains('dark-mode');
+   const bgColor = isDarkMode ? 0x1a1a1a : 0xffffff;
    phaserGame=new Phaser.Game({
-     type:Phaser.AUTO, width:W, height:H, backgroundColor:'#090909',
+     type:Phaser.CANVAS, width:W, height:H,
+     transparent:true,
      parent:document.getElementById('game-wrapper'),
      resolution:DPR,
      scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.CENTER_HORIZONTALLY,zoom:1/DPR},
@@ -826,7 +894,7 @@ function startGame(){
  }
 }
 
-
+initThemeToggle();
 startGame();
 </script>
 </body>
